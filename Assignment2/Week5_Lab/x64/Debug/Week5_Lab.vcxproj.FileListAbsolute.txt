@@ -1,0 +1,2 @@
+C:\Users\samee\Desktop\OpenGL Labs\topic1_first_programs\graphics_examples\Week5_Lab\x64\Debug\Week5_Lab.vcxproj.CopyComplete
+C:\Users\samee\Desktop\Graphics-Assignment2\topic1_first_programs\graphics_examples\Week5_Lab\x64\Debug\Week5_Lab.vcxproj.CopyComplete
