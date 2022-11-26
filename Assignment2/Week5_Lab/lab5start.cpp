@@ -1,10 +1,11 @@
-/*
- Lab5start
- This is an starting project for lab5. The goal for you is to apply texture
- to both the cube and the sphere
- Iain Martin October 2018
+ï»¿/*
+ Lab5 Solution (Texturing)
+ Applies different textures to  cube and a sphere objectss
+ Includes rotation, scaling, translation, view and perspective transformations,
+ Objects have normals,colours and texture coordinates defined
+ for all vertices.
+ Iain Martin November 2022
 */
-
 
 /* Link to static libraries, could define these as linker inputs in the project settings instead
 if you prefer */
@@ -15,26 +16,25 @@ if you prefer */
 #endif
 #pragma comment(lib, "opengl32.lib")
 
-/* Include the image loader */
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
 
 /* Include the header to the GLFW wrapper class which
    also includes the OpenGL extension initialisation*/
 #include "wrapper_glfw.h"
-#include "cube_tex.h"
-#include "sphere_tex.h"
 #include <iostream>
 
-/* Include GLM core and matrix extensions*/
+   /* Include GLM core and matrix extensions*/
 #include <glm/glm.hpp>
 #include "glm/gtc/matrix_transform.hpp"
 #include <glm/gtc/type_ptr.hpp>
 
-/* Define buffer object indices */
-GLuint positionBufferObject, colourObject, normalsBufferObject;
-GLuint sphereBufferObject, sphereNormals, sphereColours, sphereTexCoords;
-GLuint elementbuffer;
+/* Include the image loader */
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
+/* Include the cube and sphere objects with texture coordinates */
+#include "sphere_tex.h"
+#include "cube_tex.h"
+
 
 GLuint program;		/* Identifier for the shader prgoram */
 GLuint vao;			/* Vertex array (Containor) object. This is the index of the VAO that will be the container for
@@ -44,11 +44,15 @@ GLuint colourmode;	/* Index of a uniform to switch the colour mode in the vertex
 					  I've included this to show you how to pass in an unsigned integer into
 					  your vertex shader. */
 
-/* Position and view globals */
-GLfloat angle_x, angle_inc_x, x, model_scale, z, y;
+					  /* Position and view globals */
+GLfloat angle_x, angle_inc_x, x, scaler, z, y;
 GLfloat angle_y, angle_inc_y, angle_z, angle_inc_z;
 GLuint drawmode;			// Defines drawing mode of sphere as points, lines or filled polygons
 GLuint numlats, numlongs;	//Define the resolution of the sphere object
+
+//Camera Controls
+float horizontalCam;
+float verticalCam;
 
 /* Uniforms*/
 GLuint modelID, viewID, projectionID;
@@ -56,20 +60,27 @@ GLuint colourmodeID;
 
 GLfloat aspect_ratio;		/* Aspect ratio of the window defined in the reshape callback*/
 GLuint numspherevertices;
-Cube aCube;
-Sphere aSphere;
 
-GLuint texID;
-GLuint texID_Sphere;
+GLuint textureID1, textureID2;
+
+Sphere sphere;
+Cube cube(true);
 
 using namespace std;
 using namespace glm;
 
-void loadTexture(GLuint textureID, string location)
+
+bool load_texture(char* filename, GLuint& texID, bool bGenMipmaps);
+
+bool load_texture(const char* filename, GLuint& texID, bool bGenMipmaps)
 {
-	// Image parameters
+	glGenTextures(1, &texID);
+	// local image parameters
 	int width, height, nrChannels;
-	unsigned char* data = stbi_load(&location[0], &width, &height, &nrChannels, 0);
+
+	/* load an image file using stb_image */
+	unsigned char* data = stbi_load(filename, &width, &height, &nrChannels, 0);
+
 	// check for an error during the load process
 	if (data)
 	{
@@ -79,34 +90,39 @@ void loadTexture(GLuint textureID, string location)
 			pixel_format = GL_RGB;
 		else
 			pixel_format = GL_RGBA;
+
 		// Bind the texture ID before the call to create the texture.
-		// texID will now be the identifier for this specific texture
-		glBindTexture(GL_TEXTURE_2D, textureID);
+			// texID[i] will now be the identifier for this specific texture
+		glBindTexture(GL_TEXTURE_2D, texID);
+
 		// Create the texture, passing in the pointer to the loaded image pixel data
-		glTexImage2D(GL_TEXTURE_2D, 0, pixel_format, width, height, 0, pixel_format,
-			GL_UNSIGNED_BYTE, data);
-		stbi_image_free(data);
+		glTexImage2D(GL_TEXTURE_2D, 0, pixel_format, width, height, 0, pixel_format, GL_UNSIGNED_BYTE, data);
+
+		// Generate Mip Maps
+		if (bGenMipmaps)
+		{
+			glGenerateMipmap(GL_TEXTURE_2D);
+		}
+		else
+		{
+			// If mipmaps are not used then ensure that the min filter is defined
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		}
 	}
 	else
 	{
-		printf("stb_image loading error:");
-		exit(0);
+		printf("stb_image  loading error: filename=%s", filename);
+		return false;
 	}
-
-	// This is the location of the texture object (TEXTURE0), i.e. tex1 will be the name
-	// of the sampler2D object in the fragment shader
-	int loc = glGetUniformLocation(program, "tex1");
-	if (loc >= 0) glUniform1i(loc, 0);
-	// If mipmaps are not used then ensure that the min filter is defined. Note that this
-	// will probably result in texture aliasing if a large texture is viewed at a distance
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	stbi_image_free(data);
+	return true;
 }
 
 /*
 This function is called before entering the main rendering loop.
 Use it for all your initialisation stuff
 */
-void init(GLWrapper *glw)
+void init(GLWrapper* glw)
 {
 	/* Set the object transformation controls to their initial values */
 	x = 0.05f;
@@ -114,11 +130,14 @@ void init(GLWrapper *glw)
 	z = 0;
 	angle_x = angle_y = angle_z = 0;
 	angle_inc_x = angle_inc_y = angle_inc_z = 0;
-	model_scale = 1.f;
+	scaler = 1.f;
 	aspect_ratio = 1.3333f;
 	colourmode = 0;
-	numlats = 60;		// Number of latitudes in our sphere
-	numlongs = 60;		// Number of longitudes in our sphere
+	numlats = 100;		// Number of latitudes in our sphere
+	numlongs = 100;		// Number of longitudes in our sphere
+
+	horizontalCam = 0.0f;
+	verticalCam = 0.0f;
 
 	// Generate index (name) for one vertex array object
 	glGenVertexArrays(1, &vao);
@@ -127,15 +146,15 @@ void init(GLWrapper *glw)
 	glBindVertexArray(vao);
 
 	/* create the sphere and cube objects */
-	aCube.makeCube();
-	aSphere.makeSphere(numlats, numlongs);
+	sphere.makeSphere(numlats, numlongs);
+	cube.makeCube();
 
 	/* Load and build the vertex and fragment shaders */
 	try
 	{
 		program = glw->LoadShader("lab5start.vert", "lab5start.frag");
 	}
-	catch (exception &e)
+	catch (exception& e)
 	{
 		cout << "Caught exception: " << e.what() << endl;
 		cin.ignore();
@@ -148,25 +167,45 @@ void init(GLWrapper *glw)
 	viewID = glGetUniformLocation(program, "view");
 	projectionID = glGetUniformLocation(program, "projection");
 
-	// Obtain an unused texture identifier.
-	glGenTextures(1, &texID);
+	// Call our texture loader function to load two textures.#
+	// Note that our texture loader generates the texID and is passed as a var parameter
+	// The third parameter is a boolean that with generater mipmaps if true
 
-	loadTexture(texID, "ground1.jpg");
-	loadTexture(texID_Sphere, "jupiter.png");
+	/* load an image file using stb_image */
+	const char* filename1 = "ground1.jpg";
+	const char* filename2 = "jupiter.png";
 
-	// Enable face culling. This will cull the back faces of all
-	// triangles. Be careful to ensure that triangles are drawn
-	// with correct winding.
-	glEnable(GL_CULL_FACE);
-	glCullFace(GL_BACK);
+	// This will flip the image so that the texture coordinates defined in
+	// the sphere, match the image orientation as loaded by stb_image
+	stbi_set_flip_vertically_on_load(true);
+	if (!load_texture(filename1, textureID1, true))
+	{
+		cout << "Fatal error loading texture: " << filename1 << endl;
+		exit(0);
+	}
+
+	if (!load_texture(filename2, textureID2, false))
+	{
+		cout << "Fatal error loading texture: " << filename2 << endl;
+		exit(0);
+	}
+
+	// This is the location of the texture object (TEXTURE0), i.e. tex1 will be the name
+	// of the sampler in the fragment shader
+	int loc = glGetUniformLocation(program, "tex1");
+	if (loc >= 0) glUniform1i(loc, 0);
+
+	// SET Texture MAG_FILTER to linear which will blur the texture if we
+	// zoom too close in
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 }
-
-
 
 /* Called to update the display. Note that this function is called in the event loop in the wrapper
    class because we registered display as a callback function */
 void display()
 {
+	glfwSetTime(0);
+	
 	/* Define the background colour */
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
@@ -179,25 +218,38 @@ void display()
 	/* Make the compiled shader program current */
 	glUseProgram(program);
 
-	glBindTexture(GL_TEXTURE_2D, texID);
-
 	// Define the model transformations for the cube
 	mat4 model = mat4(1.0f);
-	model = translate(model, vec3(x+0.5, y, z));
-	model = scale(model, vec3(model_scale, model_scale, model_scale));//scale equally in all axis
+	model = translate(model, vec3(x + 0.5, y, z));
+	model = scale(model, vec3(scaler, scaler, scaler));//scale equally in all axis
 	model = rotate(model, -radians(angle_x), vec3(1, 0, 0)); //rotating in clockwise direction around x-axis
 	model = rotate(model, -radians(angle_y), vec3(0, 1, 0)); //rotating in clockwise direction around y-axis
 	model = rotate(model, -radians(angle_z), vec3(0, 0, 1)); //rotating in clockwise direction around z-axis
 
-	// Projection matrix : 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
+	// Projection matrix : 45ï¿½ Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
 	mat4 projection = perspective(radians(30.0f), aspect_ratio, 0.1f, 100.0f);
+
+	vec3 camPos = vec3(0, 0, 1);
+
+	//Camera Direction
+	vec3 camDirection = vec3(cos(verticalCam) * sin(horizontalCam), sin(verticalCam), cos(verticalCam) * cos(horizontalCam));
+
+	//Used to calculate the correct Head up position
+	vec3 right = vec3(
+		sin(horizontalCam - 3.14f / 2.0f),
+		0,
+		cos(horizontalCam - 3.14f / 2.0f)
+	);
+
+	vec3 up = glm::cross(right, camDirection);
 
 	// Camera matrix
 	mat4 view = lookAt(
-		vec3(0, 0, 4), // Camera is at (0,0,4), in World Space
-		vec3(0, 0, 0), // and looks at the origin
-		vec3(0, 1, 0)  // Head is up (set to 0,-1,0 to look upside-down)
-		);
+		camPos,
+		camPos + camDirection, 
+		up
+	);
+
 
 	// Send our uniforms variables to the currently bound shader,
 	glUniformMatrix4fv(modelID, 1, GL_FALSE, &model[0][0]);
@@ -205,24 +257,30 @@ void display()
 	glUniformMatrix4fv(viewID, 1, GL_FALSE, &view[0][0]);
 	glUniformMatrix4fv(projectionID, 1, GL_FALSE, &projection[0][0]);
 
-	/* Draw our cube*/
-	glFrontFace(GL_CW);
-	aCube.drawCube(drawmode);
+	// Draw our cube
+	// Mipmap defined for our cube texture so enable it with the MIN_FILTER 
+	glBindTexture(GL_TEXTURE_2D, textureID1);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	cube.drawCube(drawmode);
 
 	/* Define the model transformations for our sphere */
 	model = mat4(1.0f);
-	model = translate(model, vec3(-x-0.5, 0, 0));
-	model = scale(model, vec3(model_scale/3.f, model_scale/3.f, model_scale/3.f));//scale equally in all axis
+	model = translate(model, vec3(-x - 0.5, 0, 0));
+	model = scale(model, vec3(scaler / 3.f, scaler / 3.f, scaler / 3.f));//scale equally in all axis
 	model = rotate(model, -radians(angle_x), vec3(1, 0, 0)); //rotating in clockwise direction around x-axis
 	model = rotate(model, -radians(angle_y), vec3(0, 1, 0)); //rotating in clockwise direction around y-axis
 	model = rotate(model, -radians(angle_z), vec3(0, 0, 1)); //rotating in clockwise direction around z-axis
 	glUniformMatrix4fv(modelID, 1, GL_FALSE, &model[0][0]);
 
-	glBindTexture(GL_TEXTURE_2D, texID_Sphere);
+	// Draw our sphere
+	// No mipmap defined for oursphere texture so diable mipmaps 
+	glBindTexture(GL_TEXTURE_2D, textureID2);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
-	/* Draw our sphere */
-	aSphere.drawSphere(drawmode);
+	sphere.drawSphere(drawmode);
 
+	// Disable everything
+	glBindTexture(GL_TEXTURE_2D, 0);
 	glDisableVertexAttribArray(0);
 	glUseProgram(0);
 
@@ -232,11 +290,31 @@ void display()
 	angle_z += angle_inc_z;
 }
 
+/*
+	Function to calculate camera angles based on mouse input
+	Uses http://www.opengl-tutorial.org/beginners-tutorials/tutorial-6-keyboard-and-mouse/ as a guide
+*/
+static void mouseCallback(GLFWwindow* window, double xpos, double ypos)
+{
+	int height, width;
+	int mouseSpeed = 1.0f;
+	glfwGetWindowSize(window, &width, &height);
+
+	double deltaTime = glfwGetTime();
+	glfwSetTime(0);
+
+	horizontalCam += (mouseSpeed * deltaTime * float(width / 2 - xpos));
+	verticalCam += (mouseSpeed * deltaTime * float(height / 2 - ypos));
+
+	glfwSetCursorPos(window, width/2, height/2);
+	
+}
+
 /* Called whenever the window is resized. The new window size is given, in pixels. */
 static void reshape(GLFWwindow* window, int w, int h)
 {
 	glViewport(0, 0, (GLsizei)w, (GLsizei)h);
-	aspect_ratio = ((float)w / 640.f*4.f) / ((float)h / 480.f*3.f);
+	aspect_ratio = ((float)w / 640.f * 4.f) / ((float)h / 480.f * 3.f);
 }
 
 /* change view angle, exit upon ESC */
@@ -254,8 +332,8 @@ static void keyCallback(GLFWwindow* window, int key, int s, int action, int mods
 	if (key == 'R') angle_inc_y += 0.05f;
 	if (key == 'T') angle_inc_z -= 0.05f;
 	if (key == 'Y') angle_inc_z += 0.05f;
-	if (key == 'A') model_scale -= 0.02f;
-	if (key == 'S') model_scale += 0.02f;
+	if (key == 'A') scaler -= 0.02f;
+	if (key == 'S') scaler += 0.02f;
 	if (key == 'Z') x -= 0.05f;
 	if (key == 'X') x += 0.05f;
 	if (key == 'C') y -= 0.05f;
@@ -266,12 +344,13 @@ static void keyCallback(GLFWwindow* window, int key, int s, int action, int mods
 	if (key == 'M' && action != GLFW_PRESS)
 	{
 		colourmode = !colourmode;
+		cout << "colourmode=" << colourmode << endl;
 	}
 
 	/* Cycle between drawing vertices, mesh and filled polygons */
-	if (key == ',' && action != GLFW_PRESS)
+	if (key == 'N' && action != GLFW_PRESS)
 	{
-		drawmode ++;
+		drawmode++;
 		if (drawmode > 2) drawmode = 0;
 	}
 
@@ -280,7 +359,8 @@ static void keyCallback(GLFWwindow* window, int key, int s, int action, int mods
 /* Entry point of program */
 int main(int argc, char* argv[])
 {
-	GLWrapper *glw = new GLWrapper(1024, 768, "Lab5: Fun with texture");;
+	
+	GLWrapper* glw = new GLWrapper(1024, 768, "Lab5 Solution: Textured cube and sphere");
 
 	// glad: load all OpenGL function pointers
 	// ---------------------------------------
@@ -290,6 +370,7 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 
+	glw->setMouseCallback(mouseCallback);
 	glw->setRenderer(display);
 	glw->setKeyCallback(keyCallback);
 	glw->setReshapeCallback(reshape);
@@ -298,6 +379,9 @@ int main(int argc, char* argv[])
 
 	glw->eventLoop();
 
+
 	delete(glw);
 	return 0;
 }
+
+

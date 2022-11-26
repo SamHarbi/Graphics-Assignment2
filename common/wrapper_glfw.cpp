@@ -15,6 +15,10 @@
 
 using namespace std;
 
+static void cursor_callback(GLFWwindow* window, double xpos, double ypos) {
+	std::cout << xpos << std::endl;
+}
+
 /* Constructor for wrapper object */
 GLWrapper::GLWrapper(int width, int height, const char *title) {
 
@@ -63,7 +67,12 @@ GLWrapper::GLWrapper(int width, int height, const char *title) {
 	/* Can set the Window title at a later time if you wish*/
 	glfwSetWindowTitle(window, "Hello Graphics (again)");
 
+	//Setup Mouse 
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, true);
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+
+	if (glfwRawMouseMotionSupported())
+		glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 
 	glEnable(GL_MULTISAMPLE);
 }
@@ -144,6 +153,10 @@ void GLWrapper::setKeyCallback(void(*func)(GLFWwindow* window, int key, int scan
 	glfwSetKeyCallback(window, func);
 }
 
+void GLWrapper::setMouseCallback(void(*func)(GLFWwindow* window, double xpos, double ypos))
+{
+	glfwSetCursorPosCallback(window, func);
+}
 
 /* Build shaders from strings containing shader source code */
 GLuint GLWrapper::BuildShader(GLenum eShaderType, const string &shaderText)

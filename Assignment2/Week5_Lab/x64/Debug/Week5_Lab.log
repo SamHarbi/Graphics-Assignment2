@@ -1,11 +1,5 @@
-﻿  glad.c
-  wrapper_glfw.cpp
-  cube_tex.cpp
-  lab5start.cpp
-  quad_tex.cpp
-  sphere_tex.cpp
-C:\Users\samee\Desktop\Graphics-Assignment2\topic1_first_programs\graphics_examples\Week5_Lab\sphere_tex.cpp(255,98): warning C4312: 'type cast': conversion from 'GLuint' to 'GLvoid *' of greater size
-C:\Users\samee\Desktop\Graphics-Assignment2\topic1_first_programs\graphics_examples\Week5_Lab\sphere_tex.cpp(259,95): warning C4312: 'type cast': conversion from 'GLuint' to 'GLvoid *' of greater size
-  Generating Code...
-  LINK : C:\Users\samee\Desktop\Graphics-Assignment2\topic1_first_programs\graphics_examples\x64\Debug\Week5_Lab.exe not found or not built by the last incremental link; performing full link
-  Week5_Lab.vcxproj -> C:\Users\samee\Desktop\Graphics-Assignment2\topic1_first_programs\graphics_examples\x64\Debug\Week5_Lab.exe
+﻿  lab5start.cpp
+C:\Users\Sam\Desktop\Graphics-Assignment2\Graphics-Assignment2\Assignment2\Week5_Lab\lab5start.cpp(300,17): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\Sam\Desktop\Graphics-Assignment2\Graphics-Assignment2\Assignment2\Week5_Lab\lab5start.cpp(306,43): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam\Desktop\Graphics-Assignment2\Graphics-Assignment2\Assignment2\Week5_Lab\lab5start.cpp(307,41): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+  Week5_Lab.vcxproj -> C:\Users\Sam\Desktop\Graphics-Assignment2\Graphics-Assignment2\Assignment2\x64\Debug\Week5_Lab.exe
