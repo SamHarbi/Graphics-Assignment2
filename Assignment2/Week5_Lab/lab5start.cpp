@@ -216,7 +216,7 @@ void display()
 	glfwSetTime(0);
 	
 	/* Define the background colour */
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClearColor(102.0f/255.0f, 153.0f/255.0f, 255.0f/255.0f, 1.0f);
 
 	/* Clear the colour and frame buffers */
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -268,26 +268,17 @@ void display()
 
 	model.top() = scale(model.top(), vec3(2.0f, 2.0f, 2.0f));//scale equally in all axis
 
-	
-	for (GLint i = 0; i < 1; i++)
+	model.push(model.top());
 	{
-		for (GLint j = 0; j < 1; j++)
-		{
-			for (GLint k = 0; k < 1; k++)
-			{
-				model.push(model.top());
-				{
-					model.top() = translate(model.top(), vec3(x + (i), y + (j), z + (k)));
-					glUniformMatrix4fv(modelID, 1, GL_FALSE, &(model.top()[0][0]));
-					cube.drawCube(drawmode);
-				}
-				model.pop();
-			}
-		}
-		
+		model.top() = translate(model.top(), vec3(x, y, z));
+		glUniformMatrix4fv(modelID, 1, GL_FALSE, &(model.top()[0][0]));
+		cube.drawCube(drawmode);
+		chunkblock.drawChunkBlock();
 	}
+	model.pop();
 
-	chunkblock.drawChunkBlock();
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
 
 	// Disable everything
 	glBindTexture(GL_TEXTURE_2D, 0);

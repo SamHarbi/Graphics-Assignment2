@@ -54,7 +54,7 @@ void main()
 	fcolour = vec4(diffuse, 1.0) + ambient + specular;
 
 	// Define the vertex position
-	gl_Position = projection * view * model * vec4(position_h.x+offset.x, position_h.y+offset.y, position_h.z+offset.z, 1.0);
+	gl_Position = projection * view * model * vec4(position_h.x+offset.x/2, position_h.y+offset.y/2, position_h.z+offset.z/2, 1.0);
 
 	// Pas through the texture coordinate
 	ftexcoord = texcoord;
