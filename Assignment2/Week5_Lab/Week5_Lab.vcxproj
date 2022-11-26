@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\common\glad.c" />
     <ClCompile Include="..\..\common\wrapper_glfw.cpp" />
+    <ClCompile Include="ChunkBlock.cpp" />
     <ClCompile Include="cube_tex.cpp" />
     <ClCompile Include="lab5start.cpp" />
     <ClCompile Include="quad_tex.cpp" />
@@ -28,6 +29,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\common\wrapper_glfw.h" />
+    <ClInclude Include="ChunkBlock.h" />
     <ClInclude Include="cube_tex.h" />
     <ClInclude Include="quad_tex.h" />
     <ClInclude Include="sphere_tex.h" />

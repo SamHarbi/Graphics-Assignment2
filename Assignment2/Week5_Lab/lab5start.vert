@@ -10,6 +10,7 @@ layout(location = 0) in vec3 position;
 layout(location = 1) in vec4 colour;
 layout(location = 2) in vec3 normal;
 layout(location = 3) in vec2 texcoord;
+layout(location = 4) in vec3 offset;
 
 // Uniform variables are passed in from the application
 uniform mat4 model, view, projection;
@@ -53,7 +54,7 @@ void main()
 	fcolour = vec4(diffuse, 1.0) + ambient + specular;
 
 	// Define the vertex position
-	gl_Position = projection * view * model * position_h;
+	gl_Position = projection * view * model * vec4(position_h.x+offset.x, position_h.y+offset.y, position_h.z+offset.z, 1.0);
 
 	// Pas through the texture coordinate
 	ftexcoord = texcoord;

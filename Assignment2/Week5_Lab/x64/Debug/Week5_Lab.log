@@ -1,5 +1,1 @@
-﻿  lab5start.cpp
-C:\Users\Sam\Desktop\Graphics-Assignment2\Graphics-Assignment2\Assignment2\Week5_Lab\lab5start.cpp(300,17): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\Sam\Desktop\Graphics-Assignment2\Graphics-Assignment2\Assignment2\Week5_Lab\lab5start.cpp(306,43): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
-C:\Users\Sam\Desktop\Graphics-Assignment2\Graphics-Assignment2\Assignment2\Week5_Lab\lab5start.cpp(307,41): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
-  Week5_Lab.vcxproj -> C:\Users\Sam\Desktop\Graphics-Assignment2\Graphics-Assignment2\Assignment2\x64\Debug\Week5_Lab.exe
+﻿  Week5_Lab.vcxproj -> C:\Users\Sam\Desktop\Graphics-Assignment2\Graphics-Assignment2\Assignment2\x64\Debug\Week5_Lab.exe

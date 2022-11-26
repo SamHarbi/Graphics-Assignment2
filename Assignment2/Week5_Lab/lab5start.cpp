@@ -34,6 +34,8 @@ if you prefer */
 /* Include the cube and sphere objects with texture coordinates */
 #include "sphere_tex.h"
 #include "cube_tex.h"
+#include "ChunkBlock.h"
+#include <stack>
 
 
 GLuint program;		/* Identifier for the shader prgoram */
@@ -53,6 +55,8 @@ GLuint numlats, numlongs;	//Define the resolution of the sphere object
 //Camera Controls
 float horizontalCam;
 float verticalCam;
+GLfloat cam_x;
+GLfloat cam_y;
 
 /* Uniforms*/
 GLuint modelID, viewID, projectionID;
@@ -65,6 +69,7 @@ GLuint textureID1, textureID2;
 
 Sphere sphere;
 Cube cube(true);
+ChunkBlock chunkblock;
 
 using namespace std;
 using namespace glm;
@@ -139,6 +144,9 @@ void init(GLWrapper* glw)
 	horizontalCam = 0.0f;
 	verticalCam = 0.0f;
 
+	cam_x = 0;
+	cam_y = 0;
+
 	// Generate index (name) for one vertex array object
 	glGenVertexArrays(1, &vao);
 
@@ -148,6 +156,7 @@ void init(GLWrapper* glw)
 	/* create the sphere and cube objects */
 	sphere.makeSphere(numlats, numlongs);
 	cube.makeCube();
+	chunkblock.makeChunkBlock();
 
 	/* Load and build the vertex and fragment shaders */
 	try
@@ -218,18 +227,15 @@ void display()
 	/* Make the compiled shader program current */
 	glUseProgram(program);
 
-	// Define the model transformations for the cube
-	mat4 model = mat4(1.0f);
-	model = translate(model, vec3(x + 0.5, y, z));
-	model = scale(model, vec3(scaler, scaler, scaler));//scale equally in all axis
-	model = rotate(model, -radians(angle_x), vec3(1, 0, 0)); //rotating in clockwise direction around x-axis
-	model = rotate(model, -radians(angle_y), vec3(0, 1, 0)); //rotating in clockwise direction around y-axis
-	model = rotate(model, -radians(angle_z), vec3(0, 0, 1)); //rotating in clockwise direction around z-axis
+	// Define our model transformation in a stack and 
+	// push the identity matrix onto the stack
+	stack<mat4> model;
+	model.push(mat4(1.0f));
 
 	// Projection matrix : 45� Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
-	mat4 projection = perspective(radians(30.0f), aspect_ratio, 0.1f, 100.0f);
+	mat4 projection = perspective(radians(90.0f), aspect_ratio, 0.1f, 100.0f);
 
-	vec3 camPos = vec3(0, 0, 1);
+	vec3 camPos = vec3(cam_x, cam_y, 1);
 
 	//Camera Direction
 	vec3 camDirection = vec3(cos(verticalCam) * sin(horizontalCam), sin(verticalCam), cos(verticalCam) * cos(horizontalCam));
@@ -250,9 +256,7 @@ void display()
 		up
 	);
 
-
 	// Send our uniforms variables to the currently bound shader,
-	glUniformMatrix4fv(modelID, 1, GL_FALSE, &model[0][0]);
 	glUniform1ui(colourmodeID, colourmode);
 	glUniformMatrix4fv(viewID, 1, GL_FALSE, &view[0][0]);
 	glUniformMatrix4fv(projectionID, 1, GL_FALSE, &projection[0][0]);
@@ -261,23 +265,29 @@ void display()
 	// Mipmap defined for our cube texture so enable it with the MIN_FILTER 
 	glBindTexture(GL_TEXTURE_2D, textureID1);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	cube.drawCube(drawmode);
 
-	/* Define the model transformations for our sphere */
-	model = mat4(1.0f);
-	model = translate(model, vec3(-x - 0.5, 0, 0));
-	model = scale(model, vec3(scaler / 3.f, scaler / 3.f, scaler / 3.f));//scale equally in all axis
-	model = rotate(model, -radians(angle_x), vec3(1, 0, 0)); //rotating in clockwise direction around x-axis
-	model = rotate(model, -radians(angle_y), vec3(0, 1, 0)); //rotating in clockwise direction around y-axis
-	model = rotate(model, -radians(angle_z), vec3(0, 0, 1)); //rotating in clockwise direction around z-axis
-	glUniformMatrix4fv(modelID, 1, GL_FALSE, &model[0][0]);
+	model.top() = scale(model.top(), vec3(2.0f, 2.0f, 2.0f));//scale equally in all axis
 
-	// Draw our sphere
-	// No mipmap defined for oursphere texture so diable mipmaps 
-	glBindTexture(GL_TEXTURE_2D, textureID2);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	
+	for (GLint i = 0; i < 1; i++)
+	{
+		for (GLint j = 0; j < 1; j++)
+		{
+			for (GLint k = 0; k < 1; k++)
+			{
+				model.push(model.top());
+				{
+					model.top() = translate(model.top(), vec3(x + (i), y + (j), z + (k)));
+					glUniformMatrix4fv(modelID, 1, GL_FALSE, &(model.top()[0][0]));
+					cube.drawCube(drawmode);
+				}
+				model.pop();
+			}
+		}
+		
+	}
 
-	sphere.drawSphere(drawmode);
+	chunkblock.drawChunkBlock();
 
 	// Disable everything
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -340,6 +350,11 @@ static void keyCallback(GLFWwindow* window, int key, int s, int action, int mods
 	if (key == 'V') y += 0.05f;
 	if (key == 'B') z -= 0.05f;
 	if (key == 'N') z += 0.05f;
+
+	if (key == 'I') cam_x += 0.1f;
+	if (key == 'K') cam_x -= 0.1f;
+	if (key == 'J') cam_y += 0.1f;
+	if (key == 'L') cam_y -= 0.1f;
 
 	if (key == 'M' && action != GLFW_PRESS)
 	{
