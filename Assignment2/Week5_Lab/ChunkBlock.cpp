@@ -26,7 +26,7 @@ int ChunkBlock::getChunkSize()
 	return size;
 }
 
-void ChunkBlock::makeChunkBlock(glm::vec3 position)
+void ChunkBlock::makeChunkBlock()
 {
 	
 	GLfloat vertexPositions[] =
@@ -174,22 +174,8 @@ void ChunkBlock::makeChunkBlock(glm::vec3 position)
 		0.f, 1.f, 1.f, 1.f, 1.f, 0.f,
 		1.f, 0.f, 0.f, 0.f, 0.f, 1.f
 	};
+
 	
-	
-	GLint blockCount = size * size * size;
-	std::vector<glm::vec3> translations;
-	
-	for (int i = 0; i < size; i++)
-	{
-		for (int j = 0; j < size; j++)
-		{
-			
-			for (int k = 0; k < size; k++)
-			{
-				translations.push_back(glm::vec3(i+position.x, j+position.y, k+position.z));
-			}
-		}
-	}
 
 	/* Create the vertex buffer for the cube */
 	glGenBuffers(1, &positionBufferObject);
@@ -215,6 +201,47 @@ void ChunkBlock::makeChunkBlock(glm::vec3 position)
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	glGenBuffers(1, &instanceData);
+	//Add to buffer later when building instance data
+
+
+}
+
+void ChunkBlock::buildInstanceData(glm::vec3 position)
+{
+	std::mt19937 generator(position.x + position.y + position.z);
+	std::uniform_int_distribution< int > distribution(1, 6);
+
+	int randvals[4096];
+
+	for (size_t i = 0; i < 4096; ++i)
+	{
+		randvals[i] = distribution(generator);
+	}
+
+	int randiter = 0;
+
+	GLint blockCount = size * size * size;
+	std::vector<glm::vec3> translations;
+
+	for (int i = 0; i < size; i++)
+	{
+		for (int j = 0; j < size; j++)
+		{
+			for (int k = 0; k < size; k++)
+			{
+				if (j > 10)
+				{
+					translations.push_back(glm::vec3(i + position.x, j + position.y + randvals[randiter], k + position.z));
+					randiter++;
+				}
+				else
+				{
+					translations.push_back(glm::vec3(i + position.x, j + position.y, k + position.z));
+				}
+			}
+		}
+	}
+
 	glBindBuffer(GL_ARRAY_BUFFER, instanceData);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * blockCount, &translations[0], GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -223,6 +250,11 @@ void ChunkBlock::makeChunkBlock(glm::vec3 position)
 
 void ChunkBlock::drawChunkBlock()
 {
+	/* Bind cube vertices. Note that this is in attribute index 0 */
+	glBindBuffer(GL_ARRAY_BUFFER, positionBufferObject);
+	glEnableVertexAttribArray(attribute_v_coord);
+	glVertexAttribPointer(attribute_v_coord, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	
 	/* Bind cube colours. Note that this is in attribute index 1 */
 	glBindBuffer(GL_ARRAY_BUFFER, colourObject);
 	glEnableVertexAttribArray(attribute_v_colours);
@@ -246,7 +278,7 @@ void ChunkBlock::drawChunkBlock()
 	
 	glFrontFace(GL_CW);
 	
-	glPointSize(8.f);
+	glPointSize(1.f);
 	glBindVertexArray(positionBufferObject);
 	glDrawArraysInstanced(GL_TRIANGLES, 0, 36, (size * size * size));
 }

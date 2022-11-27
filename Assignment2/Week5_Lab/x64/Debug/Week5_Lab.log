@@ -1,1 +1,7 @@
-﻿  Week5_Lab.vcxproj -> C:\Users\Sam\Desktop\Graphics-Assignment2\Graphics-Assignment2\Assignment2\x64\Debug\Week5_Lab.exe
+﻿  lab5start.cpp
+C:\Users\Sam\Desktop\Graphics-Assignment2\Graphics-Assignment2\Assignment2\Week5_Lab\lab5start.cpp(350,17): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\Sam\Desktop\Graphics-Assignment2\Graphics-Assignment2\Assignment2\Week5_Lab\lab5start.cpp(356,43): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Sam\Desktop\Graphics-Assignment2\Graphics-Assignment2\Assignment2\Week5_Lab\lab5start.cpp(357,41): warning C4244: '+=': conversion from 'double' to 'float', possible loss of data
+glfw3D.lib(monitor.obj) : warning LNK4099: PDB 'glfw3.pdb' was not found with 'glfw3D.lib(monitor.obj)' or at 'C:\Users\Sam\Desktop\Graphics-Assignment2\Graphics-Assignment2\Assignment2\x64\Debug\glfw3.pdb'; linking object as if no debug info
+glfw3D.lib(win32_window.obj) : warning LNK4099: PDB 'glfw3.pdb' was not found with 'glfw3D.lib(win32_window.obj)' or at 'C:\Users\Sam\Desktop\Graphics-Assignment2\Graphics-Assignment2\Assignment2\x64\Debug\glfw3.pdb'; linking object as if no debug info
+  Week5_Lab.vcxproj -> C:\Users\Sam\Desktop\Graphics-Assignment2\Graphics-Assignment2\Assignment2\x64\Debug\Week5_Lab.exe

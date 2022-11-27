@@ -77,6 +77,10 @@ Cube cube(true);
 ChunkBlock chunkblock;
 glm::vec3 megaChunk[9];
 
+//fps counter based on http://www.opengl-tutorial.org/miscellaneous/an-fps-counter/
+double lastTime = glfwGetTime();
+int nbFrames = 0;
+
 using namespace std;
 using namespace glm;
 
@@ -181,6 +185,7 @@ void init(GLWrapper* glw)
 	/* create the sphere and cube objects */
 	sphere.makeSphere(numlats, numlongs);
 	cube.makeCube();
+	chunkblock.makeChunkBlock();
 
 	generateMegaChunk();
 
@@ -241,7 +246,8 @@ void display()
 	glfwSetTime(0);
 	
 	/* Define the background colour */
-	glClearColor(102.0f/255.0f, 153.0f/255.0f, 255.0f/255.0f, 1.0f);
+	//glClearColor(102.0f/255.0f, 153.0f/255.0f, 255.0f/255.0f, 1.0f);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
 	/* Clear the colour and frame buffers */
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -301,9 +307,6 @@ void display()
 	{
 		generateMegaChunk();
 	}
-	
-
-	cout << cam_z << endl;
 
 	for (int i = 0; i < 9; i++)
 	{
@@ -311,16 +314,13 @@ void display()
 		{
 			model.top() = translate(model.top(), vec3(x, y, z));
 			glUniformMatrix4fv(modelID, 1, GL_FALSE, &(model.top()[0][0]));
-			cube.drawCube(drawmode);
+			//cube.drawCube(drawmode);
 
-			chunkblock.makeChunkBlock(megaChunk[i]);
+			chunkblock.buildInstanceData(megaChunk[i]);
 			chunkblock.drawChunkBlock();
 		}
 		model.pop();
 	}
-
-
-	
 
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
