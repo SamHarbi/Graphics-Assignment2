@@ -23,6 +23,7 @@
     <ClCompile Include="..\..\common\wrapper_glfw.cpp" />
     <ClCompile Include="ChunkBlock.cpp" />
     <ClCompile Include="cube_tex.cpp" />
+    <ClCompile Include="Frustum.cpp" />
     <ClCompile Include="lab5start.cpp" />
     <ClCompile Include="quad_tex.cpp" />
     <ClCompile Include="sphere_tex.cpp" />
@@ -31,6 +32,7 @@
     <ClInclude Include="..\..\common\wrapper_glfw.h" />
     <ClInclude Include="ChunkBlock.h" />
     <ClInclude Include="cube_tex.h" />
+    <ClInclude Include="Frustum.h" />
     <ClInclude Include="quad_tex.h" />
     <ClInclude Include="sphere_tex.h" />
   </ItemGroup>

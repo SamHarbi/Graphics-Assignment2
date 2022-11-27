@@ -57,6 +57,11 @@ float horizontalCam;
 float verticalCam;
 GLfloat cam_x;
 GLfloat cam_y;
+GLfloat cam_z;
+
+GLfloat cam_x_mod;
+GLfloat cam_y_mod;
+GLfloat cam_z_mod;
 
 /* Uniforms*/
 GLuint modelID, viewID, projectionID;
@@ -70,6 +75,7 @@ GLuint textureID1, textureID2;
 Sphere sphere;
 Cube cube(true);
 ChunkBlock chunkblock;
+glm::vec3 megaChunk[9];
 
 using namespace std;
 using namespace glm;
@@ -123,6 +129,24 @@ bool load_texture(const char* filename, GLuint& texID, bool bGenMipmaps)
 	return true;
 }
 
+void generateMegaChunk()
+{
+	int chunkSize = chunkblock.getChunkSize();
+	vec3 ip = glm::vec3(cam_x - chunkSize/2, -20, cam_z - chunkSize / 2);
+
+	megaChunk[0] = glm::vec3(ip.x + chunkSize, ip.y, ip.z + chunkSize); //Middle
+	megaChunk[1] = vec3(ip.x, ip.y, ip.z + chunkSize); //Middle Left
+	megaChunk[2] = vec3(ip.x - chunkSize, ip.y, ip.z + chunkSize); //Top Left
+
+	megaChunk[3] = vec3(ip.x + chunkSize, ip.y, ip.z); //Bottom Left
+	megaChunk[4] = vec3(ip.x, ip.y, ip.z);
+	megaChunk[5] = vec3(ip.x - chunkSize, ip.y, ip.z);
+
+	megaChunk[6] = vec3(ip.x + chunkSize, ip.y, ip.z - chunkSize);
+	megaChunk[7] = vec3(ip.x, ip.y, ip.z - chunkSize);
+	megaChunk[8] = vec3(ip.x - chunkSize, ip.y, ip.z - chunkSize);
+}
+
 /*
 This function is called before entering the main rendering loop.
 Use it for all your initialisation stuff
@@ -144,8 +168,9 @@ void init(GLWrapper* glw)
 	horizontalCam = 0.0f;
 	verticalCam = 0.0f;
 
-	cam_x = 0;
+	cam_x = 13;
 	cam_y = 0;
+	cam_z = 13;
 
 	// Generate index (name) for one vertex array object
 	glGenVertexArrays(1, &vao);
@@ -156,9 +181,9 @@ void init(GLWrapper* glw)
 	/* create the sphere and cube objects */
 	sphere.makeSphere(numlats, numlongs);
 	cube.makeCube();
-	chunkblock.makeChunkBlock();
 
-	/* Load and build the vertex and fragment shaders */
+	generateMegaChunk();
+
 	try
 	{
 		program = glw->LoadShader("lab5start.vert", "lab5start.frag");
@@ -235,7 +260,7 @@ void display()
 	// Projection matrix : 45� Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
 	mat4 projection = perspective(radians(90.0f), aspect_ratio, 0.1f, 100.0f);
 
-	vec3 camPos = vec3(cam_x, cam_y, 1);
+	vec3 camPos = vec3(cam_x, cam_y, cam_z);
 
 	//Camera Direction
 	vec3 camDirection = vec3(cos(verticalCam) * sin(horizontalCam), sin(verticalCam), cos(verticalCam) * cos(horizontalCam));
@@ -268,14 +293,34 @@ void display()
 
 	model.top() = scale(model.top(), vec3(2.0f, 2.0f, 2.0f));//scale equally in all axis
 
-	model.push(model.top());
+	if (cam_x > 32 + megaChunk[5].x || cam_x < megaChunk[5].x + 16)
 	{
-		model.top() = translate(model.top(), vec3(x, y, z));
-		glUniformMatrix4fv(modelID, 1, GL_FALSE, &(model.top()[0][0]));
-		cube.drawCube(drawmode);
-		chunkblock.drawChunkBlock();
+		generateMegaChunk();
 	}
-	model.pop();
+	if (cam_z > 16 + megaChunk[5].z || cam_z < megaChunk[5].z)
+	{
+		generateMegaChunk();
+	}
+	
+
+	cout << cam_z << endl;
+
+	for (int i = 0; i < 9; i++)
+	{
+		model.push(model.top());
+		{
+			model.top() = translate(model.top(), vec3(x, y, z));
+			glUniformMatrix4fv(modelID, 1, GL_FALSE, &(model.top()[0][0]));
+			cube.drawCube(drawmode);
+
+			chunkblock.makeChunkBlock(megaChunk[i]);
+			chunkblock.drawChunkBlock();
+		}
+		model.pop();
+	}
+
+
+	
 
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
@@ -289,6 +334,10 @@ void display()
 	angle_x += angle_inc_x;
 	angle_y += angle_inc_y;
 	angle_z += angle_inc_z;
+
+	cam_x_mod = camDirection.x;
+	cam_y_mod = camDirection.y;
+	cam_z_mod = camDirection.z;
 }
 
 /*
@@ -342,10 +391,18 @@ static void keyCallback(GLFWwindow* window, int key, int s, int action, int mods
 	if (key == 'B') z -= 0.05f;
 	if (key == 'N') z += 0.05f;
 
-	if (key == 'I') cam_x += 0.1f;
-	if (key == 'K') cam_x -= 0.1f;
-	if (key == 'J') cam_y += 0.1f;
-	if (key == 'L') cam_y -= 0.1f;
+	if (key == 'I')
+	{
+		cam_x += cam_x_mod;
+		cam_z += cam_z_mod;
+	}
+	if (key == 'K')
+	{
+		cam_x -= cam_x_mod;
+		cam_z -= cam_z_mod;
+	}
+	//if (key == 'J') cam_z += cam_z_mod;
+	//if (key == 'L') cam_z -= cam_z_mod;
 
 	if (key == 'M' && action != GLFW_PRESS)
 	{

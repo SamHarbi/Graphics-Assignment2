@@ -21,7 +21,12 @@ ChunkBlock::~ChunkBlock()
 
 }
 
-void ChunkBlock::makeChunkBlock()
+int ChunkBlock::getChunkSize()
+{
+	return size;
+}
+
+void ChunkBlock::makeChunkBlock(glm::vec3 position)
 {
 	
 	GLfloat vertexPositions[] =
@@ -178,9 +183,10 @@ void ChunkBlock::makeChunkBlock()
 	{
 		for (int j = 0; j < size; j++)
 		{
+			
 			for (int k = 0; k < size; k++)
 			{
-				translations.push_back(glm::vec3(i+3, j, k));
+				translations.push_back(glm::vec3(i+position.x, j+position.y, k+position.z));
 			}
 		}
 	}

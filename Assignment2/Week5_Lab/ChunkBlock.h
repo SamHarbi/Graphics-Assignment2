@@ -14,8 +14,9 @@ class ChunkBlock
 		ChunkBlock();
 		~ChunkBlock();
 
-		void makeChunkBlock();
+		void makeChunkBlock(glm::vec3 position);
 		void drawChunkBlock();
+		int getChunkSize();
 
 		// Define vertex buffer object names (e.g as globals)
 		GLuint positionBufferObject;
