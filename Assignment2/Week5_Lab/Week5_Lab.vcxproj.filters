@@ -39,6 +39,9 @@
     <ClCompile Include="Frustum.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Noise.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cube_tex.h">
@@ -59,12 +62,24 @@
     <ClInclude Include="Frustum.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Noise.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PerlinNoise.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="lab5start.frag">
+    <None Include="program_f_0.frag">
       <Filter>Source Files</Filter>
     </None>
-    <None Include="lab5start.vert">
+    <None Include="program_v_0.vert">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="program_v_1.vert">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="program_f_1.frag">
       <Filter>Source Files</Filter>
     </None>
   </ItemGroup>

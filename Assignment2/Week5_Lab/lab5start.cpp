@@ -16,13 +16,12 @@ if you prefer */
 #endif
 #pragma comment(lib, "opengl32.lib")
 
-
 /* Include the header to the GLFW wrapper class which
    also includes the OpenGL extension initialisation*/
 #include "wrapper_glfw.h"
 #include <iostream>
 
-   /* Include GLM core and matrix extensions*/
+/* Include GLM core and matrix extensions*/
 #include <glm/glm.hpp>
 #include "glm/gtc/matrix_transform.hpp"
 #include <glm/gtc/type_ptr.hpp>
@@ -37,8 +36,8 @@ if you prefer */
 #include "ChunkBlock.h"
 #include <stack>
 
-
-GLuint program;		/* Identifier for the shader prgoram */
+const int numOfPrograms = 2;
+GLuint program[numOfPrograms];		/* Identifier for the shader prgoram */
 GLuint vao;			/* Vertex array (Containor) object. This is the index of the VAO that will be the container for
 					   our buffer objects */
 
@@ -64,18 +63,19 @@ GLfloat cam_y_mod;
 GLfloat cam_z_mod;
 
 /* Uniforms*/
-GLuint modelID, viewID, projectionID;
-GLuint colourmodeID;
+GLuint modelID[numOfPrograms], viewID[numOfPrograms], projectionID[numOfPrograms];
+GLuint colourmodeID[numOfPrograms];
 
 GLfloat aspect_ratio;		/* Aspect ratio of the window defined in the reshape callback*/
 GLuint numspherevertices;
 
-GLuint textureID1, textureID2;
+GLuint textureID1, textureID2, GrassTextureID, SkyTextureID;
 
 Sphere sphere;
 Cube cube(true);
-ChunkBlock chunkblock;
-glm::vec3 megaChunk[9];
+
+ChunkBlock chunkblock; //Single 16x16x16 Chunk Block
+glm::vec3 megaChunk[9]; //Positions of all visible Chunks around a player
 
 //fps counter based on http://www.opengl-tutorial.org/miscellaneous/an-fps-counter/
 double lastTime = glfwGetTime();
@@ -84,8 +84,49 @@ int nbFrames = 0;
 using namespace std;
 using namespace glm;
 
-
 bool load_texture(char* filename, GLuint& texID, bool bGenMipmaps);
+bool loadCubeMap(GLuint& texID, vector<std::string> faces);
+
+//Extensively uses code from https://learnopengl.com/Advanced-OpenGL/Cubemaps
+bool loadCubeMap(GLuint& texID, vector<std::string> faces)
+{
+	glGenTextures(1, &texID);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, texID);
+
+	// local image parameters
+	int width, height, nrChannels;
+
+	for (unsigned int i = 0; i < faces.size(); i++)
+	{
+		unsigned char* data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
+		if (data)
+		{
+			int pixel_format = 0;
+			if (nrChannels == 3)
+				pixel_format = GL_RGB;
+			else
+				pixel_format = GL_RGBA;
+			
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+				0, pixel_format, width, height, 0, pixel_format, GL_UNSIGNED_BYTE, data
+			);
+			stbi_image_free(data);
+		}
+		else
+		{
+			std::cout << "Cubemap tex failed to load at path: " << faces[i] << std::endl;
+			stbi_image_free(data);
+			return false;
+		}
+	}
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+	return true;
+}
 
 bool load_texture(const char* filename, GLuint& texID, bool bGenMipmaps)
 {
@@ -189,55 +230,120 @@ void init(GLWrapper* glw)
 
 	generateMegaChunk();
 
-	try
+	for (int i = 0; i < numOfPrograms; i++)
 	{
-		program = glw->LoadShader("lab5start.vert", "lab5start.frag");
-	}
-	catch (exception& e)
-	{
-		cout << "Caught exception: " << e.what() << endl;
-		cin.ignore();
-		exit(0);
-	}
+		try
+		{
+			string path_v = "program_v_" + to_string(i) + ".vert";
+			string path_f = "program_f_" + to_string(i) + ".frag";
+			program[i] = glw->LoadShader(&path_v[0], &path_f[0]);
+		}
+		catch (exception& e)
+		{
+			cout << "Caught exception: " << e.what() << endl;
+			cin.ignore();
+			exit(0);
+		}
 
-	/* Define uniforms to send to vertex shader */
-	modelID = glGetUniformLocation(program, "model");
-	colourmodeID = glGetUniformLocation(program, "colourmode");
-	viewID = glGetUniformLocation(program, "view");
-	projectionID = glGetUniformLocation(program, "projection");
+		/* Define uniforms to send to vertex shader */
+		modelID[i] = glGetUniformLocation(program[i], "model");
+		colourmodeID[i] = glGetUniformLocation(program[i], "colourmode");
+		viewID[i] = glGetUniformLocation(program[i], "view");
+		projectionID[i] = glGetUniformLocation(program[i], "projection");
+
+	}
 
 	// Call our texture loader function to load two textures.#
 	// Note that our texture loader generates the texID and is passed as a var parameter
 	// The third parameter is a boolean that with generater mipmaps if true
 
 	/* load an image file using stb_image */
-	const char* filename1 = "ground1.jpg";
-	const char* filename2 = "jupiter.png";
-
-	// This will flip the image so that the texture coordinates defined in
-	// the sphere, match the image orientation as loaded by stb_image
-	stbi_set_flip_vertically_on_load(true);
-	if (!load_texture(filename1, textureID1, true))
+	vector<std::string> faces
 	{
-		cout << "Fatal error loading texture: " << filename1 << endl;
+			"dirt_grass.png",
+			"dirt_grass.png",
+			"grass_top.png",
+			"dirt.png",
+			"dirt_grass.png",
+			"dirt_grass.png"
+	};
+
+	vector<std::string> faces_back
+	{
+			"backgroundColorForest.png",
+			"backgroundColorForest.png",
+			"backgroundColorForest.png",
+			"backgroundColorForest.png",
+			"backgroundColorForest.png",
+			"backgroundColorForest.png"
+	};
+
+	if (!loadCubeMap(GrassTextureID, faces))
+	{
+		cout << "Fatal error loading Grass Cubemap" << endl;
 		exit(0);
 	}
 
-	if (!load_texture(filename2, textureID2, false))
+	if (!loadCubeMap(SkyTextureID, faces_back))
 	{
-		cout << "Fatal error loading texture: " << filename2 << endl;
+		cout << "Fatal error loading Grass Cubemap" << endl;
 		exit(0);
 	}
 
 	// This is the location of the texture object (TEXTURE0), i.e. tex1 will be the name
 	// of the sampler in the fragment shader
-	int loc = glGetUniformLocation(program, "tex1");
+	int loc = glGetUniformLocation(program[0], "tex1");
 	if (loc >= 0) glUniform1i(loc, 0);
 
 	// SET Texture MAG_FILTER to linear which will blur the texture if we
 	// zoom too close in
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 }
+
+void display_SkyBox()
+{
+	glUseProgram(program[1]);
+
+	stack<mat4> model;
+	model.push(mat4(1.0f));
+
+	glDisable(GL_CULL_FACE);
+
+	// Projection matrix : 45� Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
+	mat4 projection = perspective(radians(30.0f), aspect_ratio, 0.1f, 100.0f);
+
+	mat4 view = lookAt(
+		vec3(0, 0, 8),
+		vec3(0, 0, 0),
+		vec3(0, 1, 0)
+	);
+
+	// This is the location of the texture object (TEXTURE0), i.e. tex1 will be the name
+	// of the sampler in the fragment shader
+	int loc = glGetUniformLocation(program[1], "tex1");
+	if (loc >= 0) glUniform1i(loc, 0);
+
+	// Send our uniforms variables to the currently bound shader,
+	glUniform1ui(colourmodeID[1], colourmode);
+	glUniformMatrix4fv(viewID[1], 1, GL_FALSE, &view[0][0]);
+	glUniformMatrix4fv(projectionID[1], 1, GL_FALSE, &projection[0][0]);
+
+	glBindTexture(GL_TEXTURE_CUBE_MAP, SkyTextureID);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+	//glDepthMask(GL_LEQUAL);
+
+	model.push(model.top());
+	{
+		model.top() = scale(model.top(), vec3(100, 100, 100));
+		model.top() = translate(model.top(), vec3(0, 0, 0));
+		glUniformMatrix4fv(modelID[1], 1, GL_FALSE, &(model.top()[0][0]));
+		cube.drawCube(drawmode);
+	}
+	model.pop();
+
+}
+
 
 /* Called to update the display. Note that this function is called in the event loop in the wrapper
    class because we registered display as a callback function */
@@ -246,17 +352,22 @@ void display()
 	glfwSetTime(0);
 	
 	/* Define the background colour */
-	//glClearColor(102.0f/255.0f, 153.0f/255.0f, 255.0f/255.0f, 1.0f);
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClearColor(102.0f/255.0f, 153.0f/255.0f, 255.0f/255.0f, 1.0f);
+	//glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
 	/* Clear the colour and frame buffers */
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	display_SkyBox();
+
 	/* Enable depth test  */
 	glEnable(GL_DEPTH_TEST);
 
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
+
 	/* Make the compiled shader program current */
-	glUseProgram(program);
+	glUseProgram(program[0]);
 
 	// Define our model transformation in a stack and 
 	// push the identity matrix onto the stack
@@ -288,13 +399,14 @@ void display()
 	);
 
 	// Send our uniforms variables to the currently bound shader,
-	glUniform1ui(colourmodeID, colourmode);
-	glUniformMatrix4fv(viewID, 1, GL_FALSE, &view[0][0]);
-	glUniformMatrix4fv(projectionID, 1, GL_FALSE, &projection[0][0]);
+	glUniform1ui(colourmodeID[0], colourmode);
+	glUniformMatrix4fv(viewID[0], 1, GL_FALSE, &view[0][0]);
+	glUniformMatrix4fv(projectionID[0], 1, GL_FALSE, &projection[0][0]);
 
 	// Draw our cube
 	// Mipmap defined for our cube texture so enable it with the MIN_FILTER 
-	glBindTexture(GL_TEXTURE_2D, textureID1);
+	//glBindTexture(GL_TEXTURE_2D, GrassTextureID);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, GrassTextureID);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
 	model.top() = scale(model.top(), vec3(2.0f, 2.0f, 2.0f));//scale equally in all axis
@@ -302,10 +414,12 @@ void display()
 	if (cam_x > 32 + megaChunk[5].x || cam_x < megaChunk[5].x + 16)
 	{
 		generateMegaChunk();
+		//pushChunk(0);
 	}
 	if (cam_z > 16 + megaChunk[5].z || cam_z < megaChunk[5].z)
 	{
 		generateMegaChunk();
+		//pushChunk(0);
 	}
 
 	for (int i = 0; i < 9; i++)
@@ -313,7 +427,7 @@ void display()
 		model.push(model.top());
 		{
 			model.top() = translate(model.top(), vec3(x, y, z));
-			glUniformMatrix4fv(modelID, 1, GL_FALSE, &(model.top()[0][0]));
+			glUniformMatrix4fv(modelID[0], 1, GL_FALSE, &(model.top()[0][0]));
 			//cube.drawCube(drawmode);
 
 			chunkblock.buildInstanceData(megaChunk[i]);
@@ -321,9 +435,6 @@ void display()
 		}
 		model.pop();
 	}
-
-	glEnable(GL_CULL_FACE);
-	glCullFace(GL_BACK);
 
 	// Disable everything
 	glBindTexture(GL_TEXTURE_2D, 0);

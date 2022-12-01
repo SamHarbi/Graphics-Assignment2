@@ -205,9 +205,9 @@ void Cube::makeCube()
 	/* Create the texture coordinate  buffer for the cube */
 	if (enableTexture)
 	{
-		glGenBuffers(1, &texCoordsObject);
-		glBindBuffer(GL_ARRAY_BUFFER, texCoordsObject);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(texcoords), texcoords, GL_STATIC_DRAW);
+		glGenBuffers(1, &positionBufferObject);
+		glBindBuffer(GL_ARRAY_BUFFER, positionBufferObject);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertexPositions), vertexPositions, GL_STATIC_DRAW);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 }

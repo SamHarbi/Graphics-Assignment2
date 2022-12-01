@@ -25,6 +25,7 @@
     <ClCompile Include="cube_tex.cpp" />
     <ClCompile Include="Frustum.cpp" />
     <ClCompile Include="lab5start.cpp" />
+    <ClCompile Include="Noise.cpp" />
     <ClCompile Include="quad_tex.cpp" />
     <ClCompile Include="sphere_tex.cpp" />
   </ItemGroup>
@@ -33,12 +34,16 @@
     <ClInclude Include="ChunkBlock.h" />
     <ClInclude Include="cube_tex.h" />
     <ClInclude Include="Frustum.h" />
+    <ClInclude Include="Noise.h" />
+    <ClInclude Include="PerlinNoise.hpp" />
     <ClInclude Include="quad_tex.h" />
     <ClInclude Include="sphere_tex.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="lab5start.frag" />
-    <None Include="lab5start.vert" />
+    <None Include="program_f_0.frag" />
+    <None Include="program_f_1.frag" />
+    <None Include="program_v_0.vert" />
+    <None Include="program_v_1.vert" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
@@ -130,10 +135,12 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

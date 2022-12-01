@@ -1,5 +1,6 @@
 
 #include "ChunkBlock.h"
+# include "PerlinNoise.hpp"
 
 using namespace std;
 
@@ -14,6 +15,7 @@ ChunkBlock::ChunkBlock()
 	attribute_v_instance = 4;
 
 	numvertices = 12;
+
 }
 
 ChunkBlock::~ChunkBlock()
@@ -208,16 +210,7 @@ void ChunkBlock::makeChunkBlock()
 
 void ChunkBlock::buildInstanceData(glm::vec3 position)
 {
-	std::mt19937 generator(position.x + position.y + position.z);
-	std::uniform_int_distribution< int > distribution(1, 6);
-
-	int randvals[4096];
-
-	for (size_t i = 0; i < 4096; ++i)
-	{
-		randvals[i] = distribution(generator);
-	}
-
+	//Noise n;
 	int randiter = 0;
 
 	GLint blockCount = size * size * size;
@@ -229,15 +222,10 @@ void ChunkBlock::buildInstanceData(glm::vec3 position)
 		{
 			for (int k = 0; k < size; k++)
 			{
-				if (j > 10)
-				{
-					translations.push_back(glm::vec3(i + position.x, j + position.y + randvals[randiter], k + position.z));
+					//int mod = (int)(5 * n.IntegerNoise(i+position.x * k+position.z));
+					const double noise = (int)(10 * perlin.octave3D((j * 0.1 + position.z), (i * 0.1 + position.x), (k*0.1), 1));
+					translations.push_back(glm::vec3(i + position.x, j + position.y + noise, k + position.z));
 					randiter++;
-				}
-				else
-				{
-					translations.push_back(glm::vec3(i + position.x, j + position.y, k + position.z));
-				}
 			}
 		}
 	}

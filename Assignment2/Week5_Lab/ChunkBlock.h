@@ -1,5 +1,7 @@
 #pragma once
 
+
+
 #include "wrapper_glfw.h"
 #include "cube_tex.h"
 #include <vector>
@@ -9,6 +11,9 @@
 /* Include GLM core and matrix extensions*/
 #include <glm/glm.hpp>
 #include "glm/gtc/matrix_transform.hpp"
+
+//Include Noise Function
+# include "PerlinNoise.hpp"
 
 class ChunkBlock
 {
@@ -40,4 +45,7 @@ class ChunkBlock
 		int drawmode;
 		bool enableTexture;
 		int size; // size * size * size gives number of blocks
+
+		const siv::PerlinNoise::seed_type seed = 78945u;
+		const siv::PerlinNoise perlin{ seed };
 };
