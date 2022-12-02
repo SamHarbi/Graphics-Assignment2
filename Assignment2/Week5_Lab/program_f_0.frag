@@ -18,4 +18,5 @@ void main()
 
 	// Set the poixel colour to be a combination of our lit colour and the texture
 	outputColor = fcolour * texcolour;
+
 }

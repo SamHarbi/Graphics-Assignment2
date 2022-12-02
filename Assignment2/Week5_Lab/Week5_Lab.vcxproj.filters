@@ -42,6 +42,9 @@
     <ClCompile Include="Noise.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ModelLoader\tiny_loader_texture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cube_tex.h">
@@ -67,6 +70,12 @@
     </ClInclude>
     <ClInclude Include="PerlinNoise.hpp">
       <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ModelLoader\tiny_loader_texture.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ModelLoader\tiny_obj_loader.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

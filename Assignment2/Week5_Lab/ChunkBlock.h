@@ -46,6 +46,6 @@ class ChunkBlock
 		bool enableTexture;
 		int size; // size * size * size gives number of blocks
 
-		const siv::PerlinNoise::seed_type seed = 78945u;
+		const siv::PerlinNoise::seed_type seed = 78948u;
 		const siv::PerlinNoise perlin{ seed };
 };

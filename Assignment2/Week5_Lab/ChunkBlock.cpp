@@ -11,8 +11,7 @@ ChunkBlock::ChunkBlock()
 	attribute_v_coord = 0;
 	attribute_v_colours = 1;
 	attribute_v_normal = 2;
-	attribute_v_texcoord = 3;
-	attribute_v_instance = 4;
+	attribute_v_instance = 3;
 
 	numvertices = 12;
 
@@ -150,34 +149,6 @@ void ChunkBlock::makeChunkBlock()
 		0, 1.f, 0, 0, 1.f, 0, 0, 1.f, 0,
 	};
 
-	GLfloat texcoords[] =
-	{
-		// Face 0
-		0, 1.f, 0, 0, 1.f, 0,
-		1.f, 0, 1.f, 1.f, 0, 1.f,
-
-		// Face 1
-		1.0, 0.f, 0.f, 0.f, 1.f, 1.f,
-		0.f, 0.f, 0.f, 1.f, 1.f, 1.f,
-
-		// Face 2
-		1.f, 0.f, 0.f, 0.f, 1.f, 1.f,
-		0.f, 0.f, 0.f, 1.f, 1.f, 1.f,
-
-		// Face 3
-		1.f, 0.f, 0.f, 0.f, 1.f, 1.f,
-		0.f, 0.f, 0.f, 1.f, 1.f, 1.f,
-
-		// Face 4
-		0.f, 0.f, 1.f, 0.f, 1.f, 1.f,
-		1.f, 1.f, 0.f, 1.f, 0.f, 0.f,
-
-		// Face 5
-		0.f, 1.f, 1.f, 1.f, 1.f, 0.f,
-		1.f, 0.f, 0.f, 0.f, 0.f, 1.f
-	};
-
-	
 
 	/* Create the vertex buffer for the cube */
 	glGenBuffers(1, &positionBufferObject);
@@ -195,11 +166,6 @@ void ChunkBlock::makeChunkBlock()
 	glGenBuffers(1, &normalsBufferObject);
 	glBindBuffer(GL_ARRAY_BUFFER, normalsBufferObject);
 	glBufferData(GL_ARRAY_BUFFER, 36 * sizeof(glm::vec3), normals, GL_STATIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-	glGenBuffers(1, &texCoordsObject);
-	glBindBuffer(GL_ARRAY_BUFFER, texCoordsObject);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(texcoords), texcoords, GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	glGenBuffers(1, &instanceData);
@@ -253,16 +219,11 @@ void ChunkBlock::drawChunkBlock()
 	glBindBuffer(GL_ARRAY_BUFFER, normalsBufferObject);
 	glVertexAttribPointer(attribute_v_normal, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
-	/* Bind cube texture coords. Note that this is in attribute index 3 */
-	glEnableVertexAttribArray(attribute_v_texcoord);
-	glBindBuffer(GL_ARRAY_BUFFER, texCoordsObject);
-	glVertexAttribPointer(attribute_v_texcoord, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
-
-	glEnableVertexAttribArray(4);
+	glEnableVertexAttribArray(attribute_v_instance);
 	glBindBuffer(GL_ARRAY_BUFFER, instanceData);
-	glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glVertexAttribPointer(attribute_v_instance, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glVertexAttribDivisor(4, 1);
+	glVertexAttribDivisor(attribute_v_instance, 1);
 	
 	glFrontFace(GL_CW);
 	

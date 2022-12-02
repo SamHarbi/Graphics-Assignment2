@@ -30,6 +30,9 @@ if you prefer */
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
+// Include our sphere and object loader classes
+#include "ModelLoader/tiny_loader_texture.h"
+
 /* Include the cube and sphere objects with texture coordinates */
 #include "sphere_tex.h"
 #include "cube_tex.h"
@@ -65,14 +68,16 @@ GLfloat cam_z_mod;
 /* Uniforms*/
 GLuint modelID[numOfPrograms], viewID[numOfPrograms], projectionID[numOfPrograms];
 GLuint colourmodeID[numOfPrograms];
+GLuint lightviewID;
 
 GLfloat aspect_ratio;		/* Aspect ratio of the window defined in the reshape callback*/
 GLuint numspherevertices;
 
-GLuint textureID1, textureID2, GrassTextureID, SkyTextureID;
+GLuint AtlasID, GrassTextureID, SkyTextureID;
 
 Sphere sphere;
 Cube cube(true);
+TinyObjLoader tree1, tree2;
 
 ChunkBlock chunkblock; //Single 16x16x16 Chunk Block
 glm::vec3 megaChunk[9]; //Positions of all visible Chunks around a player
@@ -228,6 +233,8 @@ void init(GLWrapper* glw)
 	cube.makeCube();
 	chunkblock.makeChunkBlock();
 
+	tree1.load_obj("Models/SM_Env_Tree_01.obj");
+
 	generateMegaChunk();
 
 	for (int i = 0; i < numOfPrograms; i++)
@@ -250,8 +257,10 @@ void init(GLWrapper* glw)
 		colourmodeID[i] = glGetUniformLocation(program[i], "colourmode");
 		viewID[i] = glGetUniformLocation(program[i], "view");
 		projectionID[i] = glGetUniformLocation(program[i], "projection");
-
 	}
+
+	//Uniform that's only for shader program 0
+	lightviewID = glGetUniformLocation(program[0], "light_view");
 
 	// Call our texture loader function to load two textures.#
 	// Note that our texture loader generates the texID and is passed as a var parameter
@@ -270,13 +279,14 @@ void init(GLWrapper* glw)
 
 	vector<std::string> faces_back
 	{
-			"backgroundColorForest.png",
-			"backgroundColorForest.png",
-			"backgroundColorForest.png",
-			"backgroundColorForest.png",
-			"backgroundColorForest.png",
-			"backgroundColorForest.png"
+			"Skybox/bluecloud_ft.jpg",
+			"Skybox/bluecloud_bk.jpg",
+			"Skybox/bluecloud_up.jpg",
+			"Skybox/bluecloud_dn.jpg",
+			"Skybox/bluecloud_rt.jpg",
+			"Skybox/bluecloud_lf.jpg"
 	};
+
 
 	if (!loadCubeMap(GrassTextureID, faces))
 	{
@@ -287,6 +297,14 @@ void init(GLWrapper* glw)
 	if (!loadCubeMap(SkyTextureID, faces_back))
 	{
 		cout << "Fatal error loading Grass Cubemap" << endl;
+		exit(0);
+	}
+
+	const char* atlasfilename = "PolyAdventureTexture_01.png";
+
+	if (!load_texture(atlasfilename, AtlasID, false))
+	{
+		cout << "Fatal error loading Atlas Texture" << endl;
 		exit(0);
 	}
 
@@ -310,12 +328,27 @@ void display_SkyBox()
 	glDisable(GL_CULL_FACE);
 
 	// Projection matrix : 45� Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
-	mat4 projection = perspective(radians(30.0f), aspect_ratio, 0.1f, 100.0f);
+	mat4 projection = perspective(radians(90.0f), aspect_ratio, 0.1f, 100.0f);
 
+	vec3 camPos = vec3(cam_x, cam_y, cam_z);
+
+	//Camera Direction
+	vec3 camDirection = vec3(cos(verticalCam) * sin(horizontalCam), sin(verticalCam), cos(verticalCam) * cos(horizontalCam));
+
+	//Used to calculate the correct Head up position
+	vec3 right = vec3(
+		sin(horizontalCam - 3.14f / 2.0f),
+		0,
+		cos(horizontalCam - 3.14f / 2.0f)
+	);
+
+	vec3 up = glm::cross(right, camDirection);
+
+	// Camera matrix
 	mat4 view = lookAt(
-		vec3(0, 0, 8),
 		vec3(0, 0, 0),
-		vec3(0, 1, 0)
+		vec3(0, 0, 0) + camDirection,
+		up
 	);
 
 	// This is the location of the texture object (TEXTURE0), i.e. tex1 will be the name
@@ -335,7 +368,7 @@ void display_SkyBox()
 
 	model.push(model.top());
 	{
-		model.top() = scale(model.top(), vec3(100, 100, 100));
+		model.top() = scale(model.top(), vec3(200, 200, 200));
 		model.top() = translate(model.top(), vec3(0, 0, 0));
 		glUniformMatrix4fv(modelID[1], 1, GL_FALSE, &(model.top()[0][0]));
 		cube.drawCube(drawmode);
@@ -362,9 +395,9 @@ void display()
 
 	/* Enable depth test  */
 	glEnable(GL_DEPTH_TEST);
+	glDepthMask(GL_LESS);
 
 	glEnable(GL_CULL_FACE);
-	glCullFace(GL_BACK);
 
 	/* Make the compiled shader program current */
 	glUseProgram(program[0]);
@@ -398,15 +431,22 @@ void display()
 		up
 	);
 
+	mat4 lightview = lookAt(
+		vec3(-8, 4, 2),
+		vec3(1, 0, 1),
+		up
+	);
+
 	// Send our uniforms variables to the currently bound shader,
 	glUniform1ui(colourmodeID[0], colourmode);
 	glUniformMatrix4fv(viewID[0], 1, GL_FALSE, &view[0][0]);
 	glUniformMatrix4fv(projectionID[0], 1, GL_FALSE, &projection[0][0]);
+	glUniformMatrix4fv(lightviewID, 1, GL_FALSE, &lightview[0][0]);
 
 	// Draw our cube
 	// Mipmap defined for our cube texture so enable it with the MIN_FILTER 
 	//glBindTexture(GL_TEXTURE_2D, GrassTextureID);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, GrassTextureID);
+	glBindTexture(GL_TEXTURE_2D, AtlasID);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
 	model.top() = scale(model.top(), vec3(2.0f, 2.0f, 2.0f));//scale equally in all axis
@@ -421,6 +461,21 @@ void display()
 		generateMegaChunk();
 		//pushChunk(0);
 	}
+
+	model.push(model.top());
+	{
+		model.top() = translate(model.top(), vec3(x, y, z));
+		model.top() = scale(model.top(), vec3(0.01, 0.01, 0.01));
+		glUniformMatrix4fv(modelID[0], 1, GL_FALSE, &(model.top()[0][0]));
+
+		glCullFace(GL_FRONT);
+		tree1.drawObject(drawmode);
+		glCullFace(GL_BACK);
+	}
+	model.pop();
+
+	glBindTexture(GL_TEXTURE_CUBE_MAP, GrassTextureID);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
 	for (int i = 0; i < 9; i++)
 	{

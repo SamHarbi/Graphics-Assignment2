@@ -9,11 +9,10 @@
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec4 colour;
 layout(location = 2) in vec3 normal;
-layout(location = 3) in vec3 texcoord;
-layout(location = 4) in vec3 offset;
+layout(location = 3) in vec3 offset;
 
 // Uniform variables are passed in from the application
-uniform mat4 model, view, projection;
+uniform mat4 model, view, projection, light_view;
 uniform uint colourmode;
 
 // Output the vertex colour - to be rasterized into pixel fragments
@@ -38,7 +37,7 @@ void main()
 
 	ambient = diffuse_colour * 0.2;
 
-	mat4 mv_matrix = view * model;
+	mat4 mv_matrix = light_view * model; //Lock view to constant value regardless of camera movement 
 	mat3 normalmatrix = mat3(mv_matrix);
 	vec3 N = mat3(mv_matrix) * normal;
 	N = normalize(N);

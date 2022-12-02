@@ -156,34 +156,6 @@ void Cube::makeCube()
 		0, 1.f, 0, 0, 1.f, 0, 0, 1.f, 0,
 	};
 
-
-	GLfloat texcoords[] =
-	{
-		// Face 0
-		0, 1.f, 0, 0, 1.f, 0,
-		1.f, 0, 1.f, 1.f, 0, 1.f,
-
-		// Face 1
-		1.0, 0.f, 0.f, 0.f, 1.f, 1.f,
-		0.f, 0.f, 0.f, 1.f, 1.f, 1.f,
-
-		// Face 2
-		1.f, 0.f, 0.f, 0.f, 1.f, 1.f,
-		0.f, 0.f, 0.f, 1.f, 1.f, 1.f,
-
-		// Face 3
-		1.f, 0.f, 0.f, 0.f, 1.f, 1.f,
-		0.f, 0.f, 0.f, 1.f, 1.f, 1.f,
-
-		// Face 4
-		0.f, 0.f, 1.f, 0.f, 1.f, 1.f,
-		1.f, 1.f, 0.f, 1.f, 0.f, 0.f,
-
-		// Face 5
-		0.f, 1.f, 1.f, 1.f, 1.f, 0.f,
-		1.f, 0.f, 0.f, 0.f, 0.f, 1.f
-	};
-
 	/* Create the vertex buffer for the cube */
 	glGenBuffers(1, &positionBufferObject);
 	glBindBuffer(GL_ARRAY_BUFFER, positionBufferObject);
@@ -201,15 +173,6 @@ void Cube::makeCube()
 	glBindBuffer(GL_ARRAY_BUFFER, normalsBufferObject);
 	glBufferData(GL_ARRAY_BUFFER, 36 * sizeof(glm::vec3), normals, GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-	/* Create the texture coordinate  buffer for the cube */
-	if (enableTexture)
-	{
-		glGenBuffers(1, &positionBufferObject);
-		glBindBuffer(GL_ARRAY_BUFFER, positionBufferObject);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(vertexPositions), vertexPositions, GL_STATIC_DRAW);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-	}
 }
 
 
@@ -230,14 +193,6 @@ void Cube::drawCube(int drawmode)
 	glEnableVertexAttribArray(attribute_v_normal);
 	glBindBuffer(GL_ARRAY_BUFFER, normalsBufferObject);
 	glVertexAttribPointer(attribute_v_normal, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
-
-	if (enableTexture)
-	{
-		/* Bind cube texture coords. Note that this is in attribute index 3 */
-		glEnableVertexAttribArray(attribute_v_texcoord);
-		glBindBuffer(GL_ARRAY_BUFFER, texCoordsObject);
-		glVertexAttribPointer(attribute_v_texcoord, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
-	}
 
 	// Define triangle winding as clockwise
 	// It would be better to make all objects have counter-clockwise winding
