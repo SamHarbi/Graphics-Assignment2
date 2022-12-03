@@ -46,6 +46,8 @@ class ChunkBlock
 		bool enableTexture;
 		int size; // size * size * size gives number of blocks
 
+		std::vector<glm::vec3> translations;
+
 		const siv::PerlinNoise::seed_type seed = 78948u;
 		const siv::PerlinNoise perlin{ seed };
 };

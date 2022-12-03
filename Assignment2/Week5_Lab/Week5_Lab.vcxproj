@@ -43,10 +43,12 @@
     <ClInclude Include="sphere_tex.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="program_f_0.frag" />
-    <None Include="program_f_1.frag" />
-    <None Include="program_v_0.vert" />
-    <None Include="program_v_1.vert" />
+    <None Include="Shaders\program_f_0.frag" />
+    <None Include="Shaders\program_f_1.frag" />
+    <None Include="Shaders\program_f_2.frag" />
+    <None Include="Shaders\program_v_0.vert" />
+    <None Include="Shaders\program_v_1.vert" />
+    <None Include="Shaders\program_v_2.vert" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

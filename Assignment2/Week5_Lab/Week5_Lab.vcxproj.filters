@@ -79,16 +79,22 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="program_f_0.frag">
+    <None Include="Shaders\program_f_0.frag">
       <Filter>Source Files</Filter>
     </None>
-    <None Include="program_v_0.vert">
+    <None Include="Shaders\program_f_1.frag">
       <Filter>Source Files</Filter>
     </None>
-    <None Include="program_v_1.vert">
+    <None Include="Shaders\program_f_2.frag">
       <Filter>Source Files</Filter>
     </None>
-    <None Include="program_f_1.frag">
+    <None Include="Shaders\program_v_0.vert">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="Shaders\program_v_1.vert">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="Shaders\program_v_2.vert">
       <Filter>Source Files</Filter>
     </None>
   </ItemGroup>

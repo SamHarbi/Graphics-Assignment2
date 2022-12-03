@@ -180,7 +180,8 @@ void ChunkBlock::buildInstanceData(glm::vec3 position)
 	int randiter = 0;
 
 	GLint blockCount = size * size * size;
-	std::vector<glm::vec3> translations;
+	
+	translations.clear();
 
 	for (int i = 0; i < size; i++)
 	{

@@ -39,7 +39,7 @@ if you prefer */
 #include "ChunkBlock.h"
 #include <stack>
 
-const int numOfPrograms = 2;
+const int numOfPrograms = 3;
 GLuint program[numOfPrograms];		/* Identifier for the shader prgoram */
 GLuint vao;			/* Vertex array (Containor) object. This is the index of the VAO that will be the container for
 					   our buffer objects */
@@ -233,7 +233,7 @@ void init(GLWrapper* glw)
 	cube.makeCube();
 	chunkblock.makeChunkBlock();
 
-	tree1.load_obj("Models/SM_Env_Tree_01.obj");
+	tree1.load_obj("Models/SM_Env_TreePine_03.obj");
 
 	generateMegaChunk();
 
@@ -241,8 +241,8 @@ void init(GLWrapper* glw)
 	{
 		try
 		{
-			string path_v = "program_v_" + to_string(i) + ".vert";
-			string path_f = "program_f_" + to_string(i) + ".frag";
+			string path_v = "Shaders/program_v_" + to_string(i) + ".vert";
+			string path_f = "Shaders/program_f_" + to_string(i) + ".frag";
 			program[i] = glw->LoadShader(&path_v[0], &path_f[0]);
 		}
 		catch (exception& e)
@@ -300,9 +300,9 @@ void init(GLWrapper* glw)
 		exit(0);
 	}
 
-	const char* atlasfilename = "PolyAdventureTexture_01.png";
+	const char* atlasfilename = "PolyAdventureTexture_02.png";
 
-	if (!load_texture(atlasfilename, AtlasID, false))
+	if (!load_texture(atlasfilename, AtlasID, true))
 	{
 		cout << "Fatal error loading Atlas Texture" << endl;
 		exit(0);
@@ -315,10 +315,154 @@ void init(GLWrapper* glw)
 
 	// SET Texture MAG_FILTER to linear which will blur the texture if we
 	// zoom too close in
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 }
 
-void display_SkyBox()
+void display_Models(vec3 camPos, vec3 camDirection, mat4 projection)
+{
+	glUseProgram(program[2]);
+	
+	/* Enable depth test  */
+	glEnable(GL_DEPTH_TEST);
+	glDepthMask(GL_LESS);
+
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_FRONT);
+
+	// Define our model transformation in a stack and 
+	// push the identity matrix onto the stack
+	stack<mat4> model;
+	model.push(mat4(1.0f));
+
+	//Used to calculate the correct Head up position
+	vec3 right = vec3(
+		sin(horizontalCam - 3.14f / 2.0f),
+		0,
+		cos(horizontalCam - 3.14f / 2.0f)
+	);
+
+	vec3 up = glm::cross(right, camDirection);
+
+	// Camera matrix
+	mat4 view = lookAt(
+		camPos,
+		camPos + camDirection,
+		up
+	);
+
+	mat4 lightview = lookAt(
+		vec3(-8, 4, 2),
+		vec3(1, 0, 1),
+		up
+	);
+
+	// Send our uniforms variables to the currently bound shader,
+	glUniform1ui(colourmodeID[2], colourmode);
+	glUniformMatrix4fv(viewID[2], 1, GL_FALSE, &view[0][0]);
+	glUniformMatrix4fv(projectionID[2], 1, GL_FALSE, &projection[0][0]);
+	glUniformMatrix4fv(lightviewID, 1, GL_FALSE, &lightview[0][0]);
+
+	// Draw our cube
+	// Mipmap defined for our cube texture so enable it with the MIN_FILTER 
+	//glBindTexture(GL_TEXTURE_2D, GrassTextureID);
+	glBindTexture(GL_TEXTURE_2D, AtlasID);
+	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+	//for (int i = 0; i < 10; i++)
+	//{
+		//vec3 pos = chunkblock
+		
+		model.push(model.top());
+		{
+			model.top() = translate(model.top(), vec3(x, y, z));
+			model.top() = scale(model.top(), vec3(0.01, 0.01, 0.01));
+			glUniformMatrix4fv(modelID[2], 1, GL_FALSE, &(model.top()[0][0]));
+
+			glCullFace(GL_FRONT);
+			tree1.drawObject(drawmode);
+			glCullFace(GL_BACK);
+		}
+		model.pop();
+	//}
+
+}
+
+void display_Terrain(vec3 camPos, vec3 camDirection, mat4 projection)
+{
+	/* Enable depth test  */
+	glEnable(GL_DEPTH_TEST);
+	glDepthMask(GL_LESS);
+
+	glEnable(GL_CULL_FACE);
+
+	/* Make the compiled shader program current */
+	glUseProgram(program[0]);
+
+	// Define our model transformation in a stack and 
+	// push the identity matrix onto the stack
+	stack<mat4> model;
+	model.push(mat4(1.0f));
+
+	//Used to calculate the correct Head up position
+	vec3 right = vec3(
+		sin(horizontalCam - 3.14f / 2.0f),
+		0,
+		cos(horizontalCam - 3.14f / 2.0f)
+	);
+
+	vec3 up = glm::cross(right, camDirection);
+
+	// Camera matrix
+	mat4 view = lookAt(
+		camPos,
+		camPos + camDirection,
+		up
+	);
+
+	mat4 lightview = lookAt(
+		vec3(-8, 4, 2),
+		vec3(1, 0, 1),
+		up
+	);
+
+	// Send our uniforms variables to the currently bound shader,
+	glUniform1ui(colourmodeID[0], colourmode);
+	glUniformMatrix4fv(viewID[0], 1, GL_FALSE, &view[0][0]);
+	glUniformMatrix4fv(projectionID[0], 1, GL_FALSE, &projection[0][0]);
+	glUniformMatrix4fv(lightviewID, 1, GL_FALSE, &lightview[0][0]);
+
+	model.top() = scale(model.top(), vec3(2.0f, 2.0f, 2.0f));//scale equally in all axis
+
+	if (cam_x > 32 + megaChunk[5].x || cam_x < megaChunk[5].x + 16)
+	{
+		generateMegaChunk();
+		//pushChunk(0);
+	}
+	if (cam_z > 16 + megaChunk[5].z || cam_z < megaChunk[5].z)
+	{
+		generateMegaChunk();
+		//pushChunk(0);
+	}
+
+	glBindTexture(GL_TEXTURE_CUBE_MAP, GrassTextureID);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+	for (int i = 0; i < 9; i++)
+	{
+		model.push(model.top());
+		{
+			model.top() = translate(model.top(), vec3(x, y, z));
+			glUniformMatrix4fv(modelID[0], 1, GL_FALSE, &(model.top()[0][0]));
+			//cube.drawCube(drawmode);
+
+			chunkblock.buildInstanceData(megaChunk[i]);
+			chunkblock.drawChunkBlock();
+		}
+		model.pop();
+	}
+}
+
+void display_SkyBox(vec3 camPos, vec3 camDirection, mat4 projection)
 {
 	glUseProgram(program[1]);
 
@@ -326,14 +470,6 @@ void display_SkyBox()
 	model.push(mat4(1.0f));
 
 	glDisable(GL_CULL_FACE);
-
-	// Projection matrix : 45� Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
-	mat4 projection = perspective(radians(90.0f), aspect_ratio, 0.1f, 100.0f);
-
-	vec3 camPos = vec3(cam_x, cam_y, cam_z);
-
-	//Camera Direction
-	vec3 camDirection = vec3(cos(verticalCam) * sin(horizontalCam), sin(verticalCam), cos(verticalCam) * cos(horizontalCam));
 
 	//Used to calculate the correct Head up position
 	vec3 right = vec3(
@@ -391,105 +527,19 @@ void display()
 	/* Clear the colour and frame buffers */
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	display_SkyBox();
-
-	/* Enable depth test  */
-	glEnable(GL_DEPTH_TEST);
-	glDepthMask(GL_LESS);
-
-	glEnable(GL_CULL_FACE);
-
-	/* Make the compiled shader program current */
-	glUseProgram(program[0]);
-
-	// Define our model transformation in a stack and 
-	// push the identity matrix onto the stack
-	stack<mat4> model;
-	model.push(mat4(1.0f));
-
-	// Projection matrix : 45� Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
-	mat4 projection = perspective(radians(90.0f), aspect_ratio, 0.1f, 100.0f);
-
 	vec3 camPos = vec3(cam_x, cam_y, cam_z);
 
 	//Camera Direction
 	vec3 camDirection = vec3(cos(verticalCam) * sin(horizontalCam), sin(verticalCam), cos(verticalCam) * cos(horizontalCam));
 
-	//Used to calculate the correct Head up position
-	vec3 right = vec3(
-		sin(horizontalCam - 3.14f / 2.0f),
-		0,
-		cos(horizontalCam - 3.14f / 2.0f)
-	);
+	// Projection matrix : 45� Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
+	mat4 projection = perspective(radians(90.0f), aspect_ratio, 0.1f, 100.0f);
 
-	vec3 up = glm::cross(right, camDirection);
+	display_SkyBox(camPos, camDirection, projection);
 
-	// Camera matrix
-	mat4 view = lookAt(
-		camPos,
-		camPos + camDirection, 
-		up
-	);
+	display_Terrain(camPos, camDirection, projection);
 
-	mat4 lightview = lookAt(
-		vec3(-8, 4, 2),
-		vec3(1, 0, 1),
-		up
-	);
-
-	// Send our uniforms variables to the currently bound shader,
-	glUniform1ui(colourmodeID[0], colourmode);
-	glUniformMatrix4fv(viewID[0], 1, GL_FALSE, &view[0][0]);
-	glUniformMatrix4fv(projectionID[0], 1, GL_FALSE, &projection[0][0]);
-	glUniformMatrix4fv(lightviewID, 1, GL_FALSE, &lightview[0][0]);
-
-	// Draw our cube
-	// Mipmap defined for our cube texture so enable it with the MIN_FILTER 
-	//glBindTexture(GL_TEXTURE_2D, GrassTextureID);
-	glBindTexture(GL_TEXTURE_2D, AtlasID);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-
-	model.top() = scale(model.top(), vec3(2.0f, 2.0f, 2.0f));//scale equally in all axis
-
-	if (cam_x > 32 + megaChunk[5].x || cam_x < megaChunk[5].x + 16)
-	{
-		generateMegaChunk();
-		//pushChunk(0);
-	}
-	if (cam_z > 16 + megaChunk[5].z || cam_z < megaChunk[5].z)
-	{
-		generateMegaChunk();
-		//pushChunk(0);
-	}
-
-	model.push(model.top());
-	{
-		model.top() = translate(model.top(), vec3(x, y, z));
-		model.top() = scale(model.top(), vec3(0.01, 0.01, 0.01));
-		glUniformMatrix4fv(modelID[0], 1, GL_FALSE, &(model.top()[0][0]));
-
-		glCullFace(GL_FRONT);
-		tree1.drawObject(drawmode);
-		glCullFace(GL_BACK);
-	}
-	model.pop();
-
-	glBindTexture(GL_TEXTURE_CUBE_MAP, GrassTextureID);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-
-	for (int i = 0; i < 9; i++)
-	{
-		model.push(model.top());
-		{
-			model.top() = translate(model.top(), vec3(x, y, z));
-			glUniformMatrix4fv(modelID[0], 1, GL_FALSE, &(model.top()[0][0]));
-			//cube.drawCube(drawmode);
-
-			chunkblock.buildInstanceData(megaChunk[i]);
-			chunkblock.drawChunkBlock();
-		}
-		model.pop();
-	}
+	display_Models(camPos, camDirection, projection);
 
 	// Disable everything
 	glBindTexture(GL_TEXTURE_2D, 0);
