@@ -26,6 +26,8 @@ class ChunkBlock
 		int getChunkSize();
 		void buildInstanceData(glm::vec3 position);
 
+		glm::vec3 getTranslations(int i);
+
 		// Define vertex buffer object names (e.g as globals)
 		GLuint positionBufferObject;
 		GLuint colourObject;

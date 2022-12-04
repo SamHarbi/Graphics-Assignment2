@@ -33,6 +33,9 @@ if you prefer */
 // Include our sphere and object loader classes
 #include "ModelLoader/tiny_loader_texture.h"
 
+//Perlin Noise for random gen
+# include "PerlinNoise.hpp"
+
 /* Include the cube and sphere objects with texture coordinates */
 #include "sphere_tex.h"
 #include "cube_tex.h"
@@ -85,6 +88,9 @@ glm::vec3 megaChunk[9]; //Positions of all visible Chunks around a player
 //fps counter based on http://www.opengl-tutorial.org/miscellaneous/an-fps-counter/
 double lastTime = glfwGetTime();
 int nbFrames = 0;
+
+const siv::PerlinNoise::seed_type seed = 123456u;
+const siv::PerlinNoise perlin{ seed };
 
 using namespace std;
 using namespace glm;
@@ -316,6 +322,7 @@ void init(GLWrapper* glw)
 	// SET Texture MAG_FILTER to linear which will blur the texture if we
 	// zoom too close in
 	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
 }
 
 void display_Models(vec3 camPos, vec3 camDirection, mat4 projection)
@@ -368,13 +375,15 @@ void display_Models(vec3 camPos, vec3 camDirection, mat4 projection)
 	glBindTexture(GL_TEXTURE_2D, AtlasID);
 	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
-	//for (int i = 0; i < 10; i++)
-	//{
-		//vec3 pos = chunkblock
+	for (int i = 1; i < 5; i++)
+	{
+		vec3 pos = chunkblock.getTranslations((14+15*16)*(i*2));
+		double x = perlin.noise2D(i, pos.z) * 10;
+		double z = perlin.noise2D(i, pos.x) * 10;
 		
 		model.push(model.top());
 		{
-			model.top() = translate(model.top(), vec3(x, y, z));
+			model.top() = translate(model.top(), vec3(pos.x, pos.y, pos.z));
 			model.top() = scale(model.top(), vec3(0.01, 0.01, 0.01));
 			glUniformMatrix4fv(modelID[2], 1, GL_FALSE, &(model.top()[0][0]));
 
@@ -383,7 +392,7 @@ void display_Models(vec3 camPos, vec3 camDirection, mat4 projection)
 			glCullFace(GL_BACK);
 		}
 		model.pop();
-	//}
+	}
 
 }
 
@@ -457,6 +466,9 @@ void display_Terrain(vec3 camPos, vec3 camDirection, mat4 projection)
 
 			chunkblock.buildInstanceData(megaChunk[i]);
 			chunkblock.drawChunkBlock();
+			display_Models(camPos, camDirection, projection);
+
+			glUseProgram(program[0]);
 		}
 		model.pop();
 	}
@@ -539,8 +551,6 @@ void display()
 
 	display_Terrain(camPos, camDirection, projection);
 
-	display_Models(camPos, camDirection, projection);
-
 	// Disable everything
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glDisableVertexAttribArray(0);
@@ -611,6 +621,7 @@ static void keyCallback(GLFWwindow* window, int key, int s, int action, int mods
 	{
 		cam_x += cam_x_mod;
 		cam_z += cam_z_mod;
+		cam_y += cam_y_mod;
 	}
 	if (key == 'K')
 	{

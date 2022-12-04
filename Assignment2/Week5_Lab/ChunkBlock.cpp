@@ -174,6 +174,11 @@ void ChunkBlock::makeChunkBlock()
 
 }
 
+glm::vec3 ChunkBlock::getTranslations(int i)
+{
+	return translations[i];
+}
+
 void ChunkBlock::buildInstanceData(glm::vec3 position)
 {
 	//Noise n;
@@ -193,6 +198,15 @@ void ChunkBlock::buildInstanceData(glm::vec3 position)
 					const double noise = (int)(10 * perlin.octave3D((j * 0.1 + position.z), (i * 0.1 + position.x), (k*0.1), 1));
 					translations.push_back(glm::vec3(i + position.x, j + position.y + noise, k + position.z));
 					randiter++;
+
+					/*if (j + position.y + noise > -5)
+					{
+						cout << i;
+						cout << " ";
+						cout << j;
+						cout << " ";
+						cout << k << endl;;
+					}*/
 			}
 		}
 	}
