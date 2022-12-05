@@ -18,7 +18,7 @@
     <ClCompile Include="cube_tex.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="lab5start.cpp">
+    <ClCompile Include="BlockWorld.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="quad_tex.cpp">

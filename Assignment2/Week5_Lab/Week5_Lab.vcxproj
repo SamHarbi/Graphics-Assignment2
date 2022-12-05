@@ -24,7 +24,7 @@
     <ClCompile Include="ChunkBlock.cpp" />
     <ClCompile Include="cube_tex.cpp" />
     <ClCompile Include="Frustum.cpp" />
-    <ClCompile Include="lab5start.cpp" />
+    <ClCompile Include="BlockWorld.cpp" />
     <ClCompile Include="ModelLoader\tiny_loader_texture.cpp" />
     <ClCompile Include="Noise.cpp" />
     <ClCompile Include="quad_tex.cpp" />

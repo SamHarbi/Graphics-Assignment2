@@ -3,6 +3,10 @@
   Modified from the OpenGL GLFW example to provide a wrapper GLFW class
   and to include shader loader functions to include shaders as text files
   Iain Martin August 2022
+
+  Edited by Sameer Al Harbi 2022
+  to add mouse input support using GLFW documentation
+  https://www.glfw.org/docs/3.3/input_guide.html#input_mouse
   */
 
 #include "wrapper_glfw.h"
@@ -65,7 +69,7 @@ GLWrapper::GLWrapper(int width, int height, const char *title) {
 	}
 
 	/* Can set the Window title at a later time if you wish*/
-	glfwSetWindowTitle(window, "Hello Graphics (again)");
+	//glfwSetWindowTitle(window, "Hello Graphics (again)");
 
 	//Setup Mouse 
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, true);
@@ -153,6 +157,7 @@ void GLWrapper::setKeyCallback(void(*func)(GLFWwindow* window, int key, int scan
 	glfwSetKeyCallback(window, func);
 }
 
+/* Register a callback to respond to mouse events */
 void GLWrapper::setMouseCallback(void(*func)(GLFWwindow* window, double xpos, double ypos))
 {
 	glfwSetCursorPosCallback(window, func);
