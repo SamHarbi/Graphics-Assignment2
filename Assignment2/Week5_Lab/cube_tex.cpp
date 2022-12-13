@@ -207,7 +207,7 @@ void Cube::drawCube(int drawmode)
 	if (drawmode == 2)
 	{
 		// Draw the vertices as GL_POINTS
-		glPointSize(3.f);  // Set the point size when drawing vertices
+		glPointSize(20.f);  // Set the point size when drawing vertices
 		glDrawArrays(GL_POINTS, 0, 36);
 	}
 	else

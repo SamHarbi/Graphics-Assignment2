@@ -21,12 +21,6 @@
     <ClCompile Include="BlockWorld.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="quad_tex.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="sphere_tex.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\common\glad.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -34,12 +28,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ChunkBlock.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Frustum.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Noise.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ModelLoader\tiny_loader_texture.cpp">
@@ -50,22 +38,10 @@
     <ClInclude Include="cube_tex.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="quad_tex.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\common\wrapper_glfw.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="sphere_tex.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ChunkBlock.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Frustum.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Noise.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="PerlinNoise.hpp">

@@ -1,6 +1,7 @@
 // Lab5 Solution
 // Vertex shader which calculates Gouraud shading
 // lighting vectors passes through texture coordinates
+// Used by Terrain
 // Iain Martin 2018
 
 #version 420

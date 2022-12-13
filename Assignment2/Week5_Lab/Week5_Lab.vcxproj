@@ -23,24 +23,16 @@
     <ClCompile Include="..\..\common\wrapper_glfw.cpp" />
     <ClCompile Include="ChunkBlock.cpp" />
     <ClCompile Include="cube_tex.cpp" />
-    <ClCompile Include="Frustum.cpp" />
     <ClCompile Include="BlockWorld.cpp" />
     <ClCompile Include="ModelLoader\tiny_loader_texture.cpp" />
-    <ClCompile Include="Noise.cpp" />
-    <ClCompile Include="quad_tex.cpp" />
-    <ClCompile Include="sphere_tex.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\common\wrapper_glfw.h" />
     <ClInclude Include="ChunkBlock.h" />
     <ClInclude Include="cube_tex.h" />
-    <ClInclude Include="Frustum.h" />
     <ClInclude Include="ModelLoader\tiny_loader_texture.h" />
     <ClInclude Include="ModelLoader\tiny_obj_loader.h" />
-    <ClInclude Include="Noise.h" />
     <ClInclude Include="PerlinNoise.hpp" />
-    <ClInclude Include="quad_tex.h" />
-    <ClInclude Include="sphere_tex.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\program_f_0.frag" />

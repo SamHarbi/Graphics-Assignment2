@@ -72,9 +72,10 @@ GLfloat cam_z_mod;
 /* Uniforms*/
 GLuint modelID[numOfPrograms], viewID[numOfPrograms], projectionID[numOfPrograms];
 GLuint colourmodeID[numOfPrograms];
-GLuint lightviewID;
+GLuint lightviewID[2];
 GLuint drawmode;			// Defines drawing mode as points, lines or filled polygons
 GLfloat aspect_ratio;		/* Aspect ratio of the window defined in the reshape callback*/
+GLuint normalMatrixID;
 
 //Texture IDs
 GLuint AtlasID, GrassTextureID, SkyTextureID;
@@ -85,6 +86,9 @@ Cube cube(true);
 
 ChunkBlock chunkblock; //Single 16x16x16 Chunk Block
 glm::vec3 megaChunk[9]; //Positions of all visible Chunks around a player
+
+// Define the normal matrix used by Trees lightning
+glm::mat3 normalmatrix;
 
 using namespace std;
 using namespace glm;
@@ -182,6 +186,15 @@ bool load_texture(const char* filename, GLuint& texID, bool bGenMipmaps)
 		return false;
 	}
 	stbi_image_free(data);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
 	return true;
 }
 
@@ -297,8 +310,12 @@ void init(GLWrapper* glw)
 		if (loc >= 0) glUniform1i(loc, 0);
 	}
 
-	//Uniform that's only for shader program 0
-	lightviewID = glGetUniformLocation(program[0], "light_view");
+	//Uniform that's only for shader program 0 & 2 - Terrain & Trees
+	lightviewID[0] = glGetUniformLocation(program[0], "light_view");
+	lightviewID[1] = glGetUniformLocation(program[2], "light_view");
+
+	//Uniform that's only for shader program 2 - Trees
+	normalMatrixID = glGetUniformLocation(program[2], "normalmatrix");
 
 	//Define texture images that make a terrain block cubemap texture
 	/*
@@ -354,7 +371,7 @@ void init(GLWrapper* glw)
 /*
 	Display subfunction that handles rendering trees (program 2)
 */
-void display_Trees(mat4 view, mat4 projection, TinyObjLoader tree, TinyObjLoader alt_tree)
+void display_Trees(mat4 view, mat4 lightview, mat4 projection, TinyObjLoader tree, TinyObjLoader alt_tree)
 {
 	glUseProgram(program[2]);
 	
@@ -375,6 +392,7 @@ void display_Trees(mat4 view, mat4 projection, TinyObjLoader tree, TinyObjLoader
 	glUniform1ui(colourmodeID[2], colourmode);
 	glUniformMatrix4fv(viewID[2], 1, GL_FALSE, &view[0][0]);
 	glUniformMatrix4fv(projectionID[2], 1, GL_FALSE, &projection[0][0]);
+	glUniformMatrix4fv(lightviewID[1], 1, GL_FALSE, &lightview[0][0]);
 
 	//Bind Texture
 	glBindTexture(GL_TEXTURE_2D, AtlasID);
@@ -391,6 +409,10 @@ void display_Trees(mat4 view, mat4 projection, TinyObjLoader tree, TinyObjLoader
 			model.top() = translate(model.top(), vec3(pos.x, pos.y, pos.z));
 			model.top() = scale(model.top(), vec3(0.01, 0.01, 0.01));
 			glUniformMatrix4fv(modelID[2], 1, GL_FALSE, &(model.top()[0][0]));
+
+			// Recalculate the normal matrix and send to the vertex shader
+			normalmatrix = transpose(inverse(mat3(lightview * model.top())));
+			glUniformMatrix3fv(normalMatrixID, 1, GL_FALSE, &normalmatrix[0][0]);
 
 			//Draw one of two tree models 
 			if (i > 2)
@@ -433,7 +455,7 @@ void display_Terrain(mat4 view, mat4 lightview, vec3 camPos, vec3 camDirection, 
 	glUniform1ui(colourmodeID[0], colourmode);
 	glUniformMatrix4fv(viewID[0], 1, GL_FALSE, &view[0][0]);
 	glUniformMatrix4fv(projectionID[0], 1, GL_FALSE, &projection[0][0]);
-	glUniformMatrix4fv(lightviewID, 1, GL_FALSE, &lightview[0][0]);
+	glUniformMatrix4fv(lightviewID[0], 1, GL_FALSE, &lightview[0][0]);
 
 	model.top() = scale(model.top(), vec3(2.0f, 2.0f, 2.0f));//scale equally in all axis
 
@@ -460,9 +482,9 @@ void display_Terrain(mat4 view, mat4 lightview, vec3 camPos, vec3 camDirection, 
 			glUniformMatrix4fv(modelID[0], 1, GL_FALSE, &(model.top()[0][0]));
 
 			chunkblock.buildInstanceData(megaChunk[i]); //Build a Chunk at position set out in megachunk
-			chunkblock.drawChunkBlock(); //Draw that chunk
+			chunkblock.drawChunkBlock(drawmode); //Draw that chunk
 
-			display_Trees(view, projection, tree1, tree2); //Render tree's for that chunk
+			display_Trees(view, lightview, projection, tree1, tree2); //Render tree's for that chunk
 
 			glUseProgram(program[0]); //After tree rendering is done, prepare to render next chunk
 		}

@@ -1,11 +1,10 @@
-// Lab5 Solution
-// Fragment shader which combines colour and texture.
-// The colour is the lighting colour outputted by the vertex shader
-// Iain Martin 2019
+// Based on Lab5 Solution
+// Fragment shader which uses texture using a samplerCube
+// Iain Martin 2019 - Edited by Sameer Al Harbi 2022
+// Used by Skybox
 
 #version 420
 
-in vec4 fcolour;
 out vec4 outputColor;
 in vec3 ftexcoord;
 

@@ -1,7 +1,8 @@
-// Lab5 Solution
-// Fragment shader which combines colour and texture.
+// Based on Lab5 Solution
+// Fragment shader which combines colour and texture using a samplerCube
 // The colour is the lighting colour outputted by the vertex shader
-// Iain Martin 2019
+// Iain Martin 2019 - Edited by Sameer Al Harbi 2022
+// Used by Terrain 
 
 #version 420
 
