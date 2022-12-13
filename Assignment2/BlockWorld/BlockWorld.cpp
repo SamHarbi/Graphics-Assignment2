@@ -97,6 +97,16 @@ using namespace glm;
 bool load_texture(char* filename, GLuint& texID, bool bGenMipmaps);
 bool loadCubeMap(GLuint& texID, vector<std::string> faces);
 
+//Menu of Controls
+void Menu()
+{
+	cout << "+--------[ Block World ]--------+ " << endl;
+	cout << "Use Mouse to aim and W Or S to move forward towards or away from aiming direction respectively" << endl;
+	cout << "N Changes rendering mode from triangles, to Lines, to Points and back again" << endl;
+	cout << "Use M to change diffuse colors" << endl;
+	cout << "" << endl;
+}
+
 //Extensively uses code from https://learnopengl.com/Advanced-OpenGL/Cubemaps
 // Cube Map texture Loader / loads each face in faces vector. Returns true if texture loaded successfully
 bool loadCubeMap(GLuint& texID, vector<std::string> faces)
@@ -357,6 +367,8 @@ void init(GLWrapper* glw)
 		exit(0);
 	}
 
+	stbi_set_flip_vertically_on_load(true);
+
 	//Load in Atlas Texture for models - Was distributed with models (See above)
 	const char* atlasfilename = "PolyAdventureTexture_01.png";
 
@@ -365,6 +377,8 @@ void init(GLWrapper* glw)
 		cout << "Fatal error loading Atlas Texture" << endl;
 		exit(0);
 	}
+
+	Menu(); //Display Controls Menu
 
 }
 
