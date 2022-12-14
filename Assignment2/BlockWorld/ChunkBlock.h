@@ -26,7 +26,7 @@ class ChunkBlock
 		void makeChunkBlock();
 		void drawChunkBlock(int drawmode);
 		int getChunkSize();
-		void buildInstanceData(glm::vec3 position);
+		void buildInstanceData(glm::vec3 position, int heightmod);
 
 		glm::vec3 getTranslations(int i);
 
@@ -40,14 +40,12 @@ class ChunkBlock
 		GLuint attribute_v_coord;
 		GLuint attribute_v_normal;
 		GLuint attribute_v_colours;
-		GLuint attribute_v_texcoord;
 		GLuint attribute_v_instance;
 
 		Cube instanceCube;
 
 		int numvertices;
 		int drawmode;
-		bool enableTexture;
 		int size; // size * size * size gives number of blocks
 
 		//Positions at which each instance/small cube is draw in the larger chunk 

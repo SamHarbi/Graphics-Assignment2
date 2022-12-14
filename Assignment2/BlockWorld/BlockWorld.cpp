@@ -58,11 +58,14 @@ GLfloat angle_x, angle_inc_x, x, scaler, z, y;
 GLfloat angle_y, angle_inc_y, angle_z, angle_inc_z;
 
 //Camera Controls
-float horizontalCam; 
-float verticalCam;
+double horizontalCam; 
+double verticalCam;
 GLfloat cam_x;
 GLfloat cam_y;
 GLfloat cam_z;
+
+//Perlin Settings controllable by user 
+int heightmod; //height of terrain 
 
 //Camera Position Incrementals 
 GLfloat cam_x_mod;
@@ -86,6 +89,7 @@ Cube cube(true);
 
 ChunkBlock chunkblock; //Single 16x16x16 Chunk Block
 glm::vec3 megaChunk[9]; //Positions of all visible Chunks around a player
+glm::vec3 chunkOrigin; //Origin Point of first chunk where player starts
 
 // Define the normal matrix used by Trees lightning
 glm::mat3 normalmatrix;
@@ -104,6 +108,7 @@ void Menu()
 	cout << "Use Mouse to aim and W Or S to move forward towards or away from aiming direction respectively" << endl;
 	cout << "N Changes rendering mode from triangles, to Lines, to Points and back again" << endl;
 	cout << "Use M to change diffuse colors" << endl;
+	cout << "Use H to cycle Height Modifier of terrain to a maximum value" << endl;
 	cout << "" << endl;
 }
 
@@ -208,23 +213,38 @@ bool load_texture(const char* filename, GLuint& texID, bool bGenMipmaps)
 	return true;
 }
 
-//Generate positions at which chunks need to be drawn around the camera position
-void generateMegaChunk()
+//Generate positions at which chunks need to be drawn 
+void generateMegaChunk(bool origin, glm::vec3 direction)
 {
 	/*
 		Mega Chunk Structure
 		|___| = One Chunk
-		|_x_| = Middle Chunk spawned at cam position and used to calculate rest of Mega Chunk relatively 
+		|_x_| = Middle Chunk spawned at cam position and used to calculate rest of Mega Chunk relatively if orgin = true
 	
 		1|___|2|___|3|___|
 		4|___|5|_x_|6|___|
 		7|___|8|___|9|___|
 
+		When generating new mega chunks as the player is moving, instead of spawing a new chunk at camera position instead get 
+		the direction the player is moving and move the megachunk respectively, unchanged chunks are regenerated this way which could be improved 
+		chunks use perlin noise based on world position so the terrain looks continous irrespective of how chunks movement and regeneration
 	*/
 	
 	int chunkSize = chunkblock.getChunkSize(); //Get size of a single chunk, default is defined as 16
-	vec3 ip = glm::vec3(cam_x - chunkSize/2, -20, cam_z - chunkSize / 2); //Calculate where the new middle chunk should be based on cam positon
-
+	glm::vec3 ip = glm::vec3(0, 0, 0); 
+	
+	if (origin == true)
+	{
+		ip = glm::vec3(cam_x - chunkSize / 2, -20, cam_z - chunkSize / 2); //Calculate where the new middle chunk should be based on cam positon
+		chunkOrigin = glm::vec3(ip.x, ip.y, ip.z);
+	}
+	else
+	{
+		ip = glm::vec3(chunkOrigin.x + direction.x, chunkOrigin.y + direction.y, chunkOrigin.z + direction.z); //Move whole mega chunk towards a direction
+		chunkOrigin = glm::vec3(ip.x, ip.y, ip.z);
+	}
+		
+	//Define actual positions of chunks 
 	megaChunk[0] = glm::vec3(ip.x + chunkSize, ip.y, ip.z + chunkSize); //1
 	megaChunk[1] = vec3(ip.x, ip.y, ip.z + chunkSize); //2
 	megaChunk[2] = vec3(ip.x - chunkSize, ip.y, ip.z + chunkSize); //3
@@ -265,6 +285,8 @@ void init(GLWrapper* glw)
 	cam_y = 0;
 	cam_z = 13;
 
+	heightmod = 10;
+
 	// Generate index (name) for one vertex array object
 	glGenVertexArrays(1, &vao);
 
@@ -284,7 +306,7 @@ void init(GLWrapper* glw)
 	tree2.load_obj("Models/SM_Env_Tree_01.obj");
 
 	//Create initial terrain megachunk positions using inital position
-	generateMegaChunk();
+	generateMegaChunk(true, chunkOrigin);
 
 	// This is the location of the texture object (TEXTURE0), i.e. tex1 will be the name
 	// of the sampler in the fragment shader
@@ -388,10 +410,10 @@ void init(GLWrapper* glw)
 void display_Trees(mat4 view, mat4 lightview, mat4 projection, TinyObjLoader tree, TinyObjLoader alt_tree)
 {
 	glUseProgram(program[2]);
-	
+
 	/* Enable depth test  */
 	glEnable(GL_DEPTH_TEST);
-	glDepthMask(GL_LESS);
+	glDepthMask(true);
 
 	//To correctly render these models in particular 
 	glEnable(GL_CULL_FACE);
@@ -416,8 +438,8 @@ void display_Trees(mat4 view, mat4 lightview, mat4 projection, TinyObjLoader tre
 	for (int i = 1; i < 5; i++)
 	{
 		//Get Position of a top block of previously rendered chunk
-		vec3 pos = chunkblock.getTranslations((14+15*16)*(i*2));
-		
+		vec3 pos = chunkblock.getTranslations((14 + 15 * 16) * (i * 2));
+
 		model.push(model.top());
 		{
 			model.top() = translate(model.top(), vec3(pos.x, pos.y, pos.z));
@@ -452,7 +474,7 @@ void display_Terrain(mat4 view, mat4 lightview, vec3 camPos, vec3 camDirection, 
 {
 	/* Enable depth test  */
 	glEnable(GL_DEPTH_TEST);
-	glDepthMask(GL_LESS);
+	glDepthMask(GL_TRUE);
 
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
@@ -474,13 +496,24 @@ void display_Terrain(mat4 view, mat4 lightview, vec3 camPos, vec3 camDirection, 
 	model.top() = scale(model.top(), vec3(2.0f, 2.0f, 2.0f));//scale equally in all axis
 
 	//Check if camera position is approaching megachunks bounds, if so- then regenerate for the new camera position
-	if (cam_x > 32 + megaChunk[5].x || cam_x < megaChunk[5].x + 16)
+	//X Bounds
+	if (cam_x > 32 + megaChunk[5].x)
 	{
-		generateMegaChunk();
+		generateMegaChunk(false, glm::vec3(16, 0, 0));
 	}
-	if (cam_z > 16 + megaChunk[5].z || cam_z < megaChunk[5].z)
+	else if (cam_x < megaChunk[5].x + 16)
 	{
-		generateMegaChunk();
+		glm::vec3 dir = glm::vec3(-16, 0, 0);
+		generateMegaChunk(false, dir);
+	}
+	//Z Bounds
+	if (cam_z > 16 + megaChunk[5].z)
+	{
+		generateMegaChunk(false, glm::vec3(0, 0, 16));
+	}
+	else if (cam_z < megaChunk[5].z)
+	{
+		generateMegaChunk(false, glm::vec3(0, 0, -16));
 	}
 
 	//Bind Grass Block texture
@@ -495,7 +528,7 @@ void display_Terrain(mat4 view, mat4 lightview, vec3 camPos, vec3 camDirection, 
 			model.top() = translate(model.top(), vec3(x, y, z));
 			glUniformMatrix4fv(modelID[0], 1, GL_FALSE, &(model.top()[0][0]));
 
-			chunkblock.buildInstanceData(megaChunk[i]); //Build a Chunk at position set out in megachunk
+			chunkblock.buildInstanceData(megaChunk[i], heightmod); //Build a Chunk at position set out in megachunk
 			chunkblock.drawChunkBlock(drawmode); //Draw that chunk
 
 			display_Trees(view, lightview, projection, tree1, tree2); //Render tree's for that chunk
@@ -620,14 +653,14 @@ void display()
 static void mouseCallback(GLFWwindow* window, double xpos, double ypos)
 {
 	int height, width;
-	int mouseSpeed = 1.0f;
+	float mouseSpeed = 1.0f;
 	glfwGetWindowSize(window, &width, &height);
 
 	double deltaTime = glfwGetTime();
 	glfwSetTime(0);
 
-	horizontalCam += (mouseSpeed * deltaTime * float(width / 2 - xpos));
-	verticalCam += (mouseSpeed * deltaTime * float(height / 2 - ypos));
+	horizontalCam += (mouseSpeed * deltaTime * (width / 2 - xpos));
+	verticalCam += (mouseSpeed * deltaTime * (height / 2 - ypos));
 
 	glfwSetCursorPos(window, width/2, height/2);
 	
@@ -660,6 +693,15 @@ static void keyCallback(GLFWwindow* window, int key, int s, int action, int mods
 		cam_x -= cam_x_mod;
 		cam_z -= cam_z_mod;
 		cam_y -= cam_y_mod;
+	}
+
+	if (key == 'H' && action != GLFW_PRESS) //Increase Perlin Height modifier
+	{
+		heightmod++;
+		if (heightmod > 30)
+		{
+			heightmod = 10;
+		}
 	}
 
 	if (key == 'M' && action != GLFW_PRESS)

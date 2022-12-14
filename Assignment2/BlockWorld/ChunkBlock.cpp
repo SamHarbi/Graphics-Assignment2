@@ -16,7 +16,7 @@ using namespace std;
 ChunkBlock::ChunkBlock()
 {
 	/*
-		Can increase for bigger world (Heavy effect on fps) or decrease it to a minimum of 12.
+		Can increase for bigger world (Heavy effect on fps) or decrease it to a minimum of 13.
 		Tree generation is also optimized to 16 and may not always render on the correct y axis with different values 
 	*/
 	size = 16; 
@@ -25,6 +25,14 @@ ChunkBlock::ChunkBlock()
 	attribute_v_colours = 1;
 	attribute_v_normal = 2;
 	attribute_v_instance = 3;
+
+	positionBufferObject = 0;
+	colourObject = 0;
+	normalsBufferObject = 0;
+	texCoordsObject = 0;
+	instanceData = 0;
+
+	drawmode = 0;
 
 	//Single Small Cube 
 	numvertices = 12;
@@ -195,7 +203,7 @@ glm::vec3 ChunkBlock::getTranslations(int i)
 /*
 	Create the positions of each small cube that will build the chunk and apply perlin noise 
 */
-void ChunkBlock::buildInstanceData(glm::vec3 position)
+void ChunkBlock::buildInstanceData(glm::vec3 position, int heightmod)
 {
 	GLint blockCount = size * size * size;
 	
@@ -218,7 +226,7 @@ void ChunkBlock::buildInstanceData(glm::vec3 position)
 			for (int k = 0; k < size; k++)
 			{
 					//Apply perlin noise only to the y component 
-					const double noise = (int)(10 * perlin.octave3D((j * 0.1 + position.z), (i * 0.1 + position.x), (k*0.1), 1));
+					const double noise = (int)(heightmod * perlin.octave3D((j * 0.1 + position.z), (i * 0.1 + position.x), (k*0.1), 1));
 					translations.push_back(glm::vec3(i + position.x, j + position.y + noise, k + position.z));
 			}
 		}
